@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Event, User, Feedback, Registration, EventCategory, EventStatus } from "../types";
 import { mockEvents } from "../mocks/events";
 import { mockUsers } from "../mocks/users";
-
+import { createEventApi, getEventsApi, getEventApi } from "../api/event";
 const STORAGE_KEYS = {
   CURRENT_USER: "current_user",
   USERS: "users",
@@ -30,16 +30,13 @@ export const [AppProvider, useApp] = createContextHook(() => {
   });
 
   const loadEventsQuery = useQuery({
-    queryKey: ["events"],
-    queryFn: async () => {
-      const stored = await AsyncStorage.getItem(STORAGE_KEYS.EVENTS);
-      if (stored) {
-        return JSON.parse(stored);
-      }
-      await AsyncStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(mockEvents));
-      return mockEvents;
-    },
-  });
+  queryKey: ["events"],
+  queryFn: async () => {
+    const response = await getEventsApi();
+    return response.data; // backend se events
+  },
+});
+
 
   const loadUsersQuery = useQuery({
     queryKey: ["users"],
@@ -104,7 +101,7 @@ export const [AppProvider, useApp] = createContextHook(() => {
       await AsyncStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
       const existingUsers = await AsyncStorage.getItem(STORAGE_KEYS.USERS);
       const usersList = existingUsers ? JSON.parse(existingUsers) : mockUsers;
-      const userExists = usersList.find((u: User) => u.id === user.id);
+      const userExists = usersList.find((u: User) => u._id === user._id);
       if (!userExists) {
         usersList.push(user);
         await AsyncStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(usersList));
@@ -127,19 +124,20 @@ export const [AppProvider, useApp] = createContextHook(() => {
   });
 
   const createEventMutation = useMutation({
-    mutationFn: async (event: Event) => {
-      const updated = [...events, event];
-      await AsyncStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(updated));
-      return updated;
-    },
-    onSuccess: (updated) => {
-      setEvents(updated);
-    },
-  });
+  mutationFn: async (event: Event) => {
+    // Backend call
+    const response = await createEventApi(event);
+    return response.data; // yeh backend se saved event ka data hai (_id included)
+  },
+  onSuccess: (savedEvent) => {
+    // State update
+    setEvents((prev) => [...prev, savedEvent]);
+  },
+});
 
   const updateEventMutation = useMutation({
     mutationFn: async (event: Event) => {
-      const updated = events.map((e) => (e.id === event.id ? event : e));
+      const updated = events.map((e) => (e._id === event._id ? event : e));
       await AsyncStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(updated));
       return updated;
     },
@@ -150,7 +148,7 @@ export const [AppProvider, useApp] = createContextHook(() => {
 
   const deleteEventMutation = useMutation({
     mutationFn: async (eventId: string) => {
-      const updated = events.filter((e) => e.id !== eventId);
+      const updated = events.filter((e) => e._id !== eventId);
       await AsyncStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(updated));
       return updated;
     },
@@ -162,7 +160,7 @@ export const [AppProvider, useApp] = createContextHook(() => {
   const registerEventMutation = useMutation({
     mutationFn: async ({ eventId, userId }: { eventId: string; userId: string }) => {
       const registration: Registration = {
-        id: `${eventId}_${userId}_${Date.now()}`,
+        _id: `${eventId}_${userId}_${Date.now()}`,
         eventId,
         userId,
         registeredAt: Date.now(),
@@ -172,28 +170,28 @@ export const [AppProvider, useApp] = createContextHook(() => {
       const updatedRegistrations = [...registrations, registration];
       await AsyncStorage.setItem(STORAGE_KEYS.REGISTRATIONS, JSON.stringify(updatedRegistrations));
 
-      const event = events.find((e) => e.id === eventId);
+      const event = events.find((e) => e._id === eventId);
       if (event) {
         const updatedEvent = {
           ...event,
           registeredParticipants: [...event.registeredParticipants, userId],
         };
-        const updatedEvents = events.map((e) => (e.id === eventId ? updatedEvent : e));
+        const updatedEvents = events.map((e) => (e._id === eventId ? updatedEvent : e));
         await AsyncStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(updatedEvents));
         setEvents(updatedEvents);
       }
 
-      const user = users.find((u) => u.id === userId);
+      const user = users.find((u) => u._id === userId);
       if (user) {
         const updatedUser = {
           ...user,
           registeredEvents: [...user.registeredEvents, eventId],
         };
-        const updatedUsers = users.map((u) => (u.id === userId ? updatedUser : u));
+        const updatedUsers = users.map((u) => (u._id === userId ? updatedUser : u));
         await AsyncStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(updatedUsers));
         setUsers(updatedUsers);
         
-        if (currentUser?.id === userId) {
+        if (currentUser?._id === userId) {
           setCurrentUser(updatedUser);
           await AsyncStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(updatedUser));
         }
@@ -213,28 +211,28 @@ export const [AppProvider, useApp] = createContextHook(() => {
       );
       await AsyncStorage.setItem(STORAGE_KEYS.REGISTRATIONS, JSON.stringify(updatedRegistrations));
 
-      const event = events.find((e) => e.id === eventId);
+      const event = events.find((e) => e._id === eventId);
       if (event) {
         const updatedEvent = {
           ...event,
           registeredParticipants: event.registeredParticipants.filter((id) => id !== userId),
         };
-        const updatedEvents = events.map((e) => (e.id === eventId ? updatedEvent : e));
+        const updatedEvents = events.map((e) => (e._id === eventId ? updatedEvent : e));
         await AsyncStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(updatedEvents));
         setEvents(updatedEvents);
       }
 
-      const user = users.find((u) => u.id === userId);
+      const user = users.find((u) => u._id === userId);
       if (user) {
         const updatedUser = {
           ...user,
           registeredEvents: user.registeredEvents.filter((id) => id !== eventId),
         };
-        const updatedUsers = users.map((u) => (u.id === userId ? updatedUser : u));
+        const updatedUsers = users.map((u) => (u._id === userId ? updatedUser : u));
         await AsyncStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(updatedUsers));
         setUsers(updatedUsers);
 
-        if (currentUser?.id === userId) {
+        if (currentUser?._id === userId) {
           setCurrentUser(updatedUser);
           await AsyncStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(updatedUser));
         }
@@ -252,8 +250,8 @@ export const [AppProvider, useApp] = createContextHook(() => {
       const updated = [...feedbacks, feedback];
       await AsyncStorage.setItem(STORAGE_KEYS.FEEDBACKS, JSON.stringify(updated));
 
-      const event = events.find((e) => e.id === feedback.eventId);
-      const user = users.find((u) => u.id === feedback.userId);
+      const event = events.find((e) => e._id === feedback.eventId);
+      const user = users.find((u) => u._id === feedback.userId);
       
       if (event && user) {
         const updatedUser = {
@@ -261,11 +259,11 @@ export const [AppProvider, useApp] = createContextHook(() => {
           points: user.points + event.points,
           attendedEvents: [...user.attendedEvents, feedback.eventId],
         };
-        const updatedUsers = users.map((u) => (u.id === feedback.userId ? updatedUser : u));
+        const updatedUsers = users.map((u) => (u._id === feedback.userId ? updatedUser : u));
         await AsyncStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(updatedUsers));
         setUsers(updatedUsers);
 
-        if (currentUser?.id === feedback.userId) {
+        if (currentUser?._id === feedback.userId) {
           setCurrentUser(updatedUser);
           await AsyncStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(updatedUser));
         }
@@ -343,11 +341,11 @@ export function useEventDetails(eventId: string) {
   const { events, feedbacks, currentUser } = useApp();
 
   return useMemo(() => {
-    const event = events.find((e) => e.id === eventId);
+    const event = events.find((e) => e._id === eventId);
     const eventFeedbacks = feedbacks.filter((f) => f.eventId === eventId);
-    const isRegistered = event?.registeredParticipants.includes(currentUser?.id || "") || false;
+    const isRegistered = event?.registeredParticipants.includes(currentUser?._id || "") || false;
     const hasFeedback = feedbacks.some(
-      (f) => f.eventId === eventId && f.userId === currentUser?.id
+      (f) => f.eventId === eventId && f.userId === currentUser?._id
     );
 
     const avgRating =

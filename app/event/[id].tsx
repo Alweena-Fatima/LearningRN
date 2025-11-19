@@ -56,7 +56,7 @@ export default function EventDetailsScreen() {
 
   const handleRegister = () => {
     if (!currentUser) return;
-    registerEvent({ eventId: event.id, userId: currentUser.id });
+    registerEvent({ eventId: event._id, userId: currentUser._id });
   };
 
   const handleUnregister = () => {
@@ -70,14 +70,14 @@ export default function EventDetailsScreen() {
           text: "Unregister",
           style: "destructive",
           onPress: () =>
-            unregisterEvent({ eventId: event.id, userId: currentUser.id }),
+            unregisterEvent({ eventId: event._id, userId: currentUser._id }),
         },
       ]
     );
   };
 
   const handleFeedback = () => {
-    router.push(`/feedback/${event.id}` as any);
+    router.push(`/feedback/${event._id}` as any);
   };
 
   return (
@@ -167,7 +167,7 @@ export default function EventDetailsScreen() {
                 </View>
               </View>
               {eventFeedbacks.map((feedback) => (
-                <View key={feedback.id} style={styles.feedbackCard}>
+                <View key={feedback._id} style={styles.feedbackCard}>
                   <View style={styles.feedbackHeader}>
                     <Text style={styles.feedbackName}>{feedback.userName}</Text>
                     <View style={styles.starsRow}>

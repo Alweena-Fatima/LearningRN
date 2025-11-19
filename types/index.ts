@@ -1,7 +1,7 @@
 export type UserRole = "student" | "admin";
 
 export interface User {
-  id: string;
+  _id: string;  // <--- FIXED
   name: string;
   email: string;
   role: UserRole;
@@ -12,8 +12,9 @@ export interface User {
   registeredEvents: string[];
   attendedEvents: string[];
   createdAt: number;
-  password?: string; // <--- Add this
+  password?: string;
 }
+
 
 
 export type EventCategory = "Technical" | "Cultural" | "Sports" | "Workshop" | "Social" | "Academic" | "Other";
@@ -21,7 +22,7 @@ export type EventCategory = "Technical" | "Cultural" | "Sports" | "Workshop" | "
 export type EventStatus = "upcoming" | "ongoing" | "completed" | "cancelled";
 
 export interface Event {
-  id: string;
+  _id?: string;  // <-- make this optional
   title: string;
   description: string;
   category: EventCategory;
@@ -34,14 +35,16 @@ export interface Event {
   maxParticipants: number;
   registeredParticipants: string[];
   registrationDeadline: number;
-  status: EventStatus;
+  status: string;
   createdBy: string;
   createdAt: number;
   points: number;
 }
 
+
+
 export interface Feedback {
-  id: string;
+  _id: string;   // <--- FIXED
   eventId: string;
   userId: string;
   userName: string;
@@ -50,10 +53,12 @@ export interface Feedback {
   createdAt: number;
 }
 
+
 export interface Registration {
-  id: string;
+  _id: string;  // <--- FIXED
   eventId: string;
   userId: string;
   registeredAt: number;
   attended: boolean;
 }
+

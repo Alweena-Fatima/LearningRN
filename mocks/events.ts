@@ -5,7 +5,7 @@ import { Event } from "../types"; // adjust path as needed
 
 export const mockEvents: Event[] = [
   {
-    id: "1",
+    _id: "1",
     title: "Tech Talks 2025: AI & Future",
     description: "Join us for an exciting session on Artificial Intelligence and its impact on our future. Industry experts will share insights on ML, Deep Learning, and emerging technologies.",
     category: "Technical",
@@ -24,7 +24,7 @@ export const mockEvents: Event[] = [
     points: 50,
   },
   {
-    id: "2",
+    _id: "2",
     title: "Annual Cultural Fest",
     description: "Celebrate diversity with performances, food stalls, and cultural exhibitions from around the world. Showcase your talent and enjoy the festivities!",
     category: "Cultural",
@@ -43,7 +43,7 @@ export const mockEvents: Event[] = [
     points: 75,
   },
   {
-    id: "3",
+    _id: "3",
     title: "Web Development Workshop",
     description: "Learn modern web development with React, Node.js, and MongoDB. Build a complete full-stack application from scratch. All levels welcome!",
     category: "Workshop",
@@ -62,7 +62,7 @@ export const mockEvents: Event[] = [
     points: 100,
   },
   {
-    id: "4",
+    _id: "4",
     title: "Inter-College Cricket Tournament",
     description: "Battle it out on the field in our annual cricket tournament. Form your teams and compete for the championship trophy!",
     category: "Sports",
@@ -81,7 +81,7 @@ export const mockEvents: Event[] = [
     points: 80,
   },
   {
-    id: "5",
+    _id: "5",
     title: "Career Fair 2025",
     description: "Meet recruiters from top companies, attend resume workshops, and explore internship opportunities. Dress professionally and bring your resumes!",
     category: "Academic",
@@ -100,7 +100,7 @@ export const mockEvents: Event[] = [
     points: 60,
   },
   {
-    id: "6",
+    _id: "6",
     title: "Hackathon 24hrs",
     description: "Code for 24 hours straight! Build innovative solutions to real-world problems. Amazing prizes for winners. Form teams of up to 4 members.",
     category: "Technical",

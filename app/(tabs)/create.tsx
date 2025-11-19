@@ -42,66 +42,66 @@ export default function CreateEventScreen() {
   const [points, setPoints] = useState("");
 
   const handleCreate = () => {
-    if (
-      !title ||
-      !description ||
-      !venue ||
-      !date ||
-      !startTime ||
-      !endTime ||
-      !maxParticipants ||
-      !points
-    ) {
-      Alert.alert("Error", "Please fill in all fields");
-      return;
-    }
+  if (
+    !title ||
+    !description ||
+    !venue ||
+    !date ||
+    !startTime ||
+    !endTime ||
+    !maxParticipants ||
+    !points
+  ) {
+    Alert.alert("Error", "Please fill in all fields");
+    return;
+  }
 
-    const dateValue = new Date(date).getTime();
-    if (isNaN(dateValue)) {
-      Alert.alert("Error", "Invalid date format. Use YYYY-MM-DD");
-      return;
-    }
+  const dateValue = new Date(date).getTime();
+  if (isNaN(dateValue)) {
+    Alert.alert("Error", "Invalid date format. Use YYYY-MM-DD");
+    return;
+  }
 
-    const event: Event = {
-      id: `event_${Date.now()}`,
-      title,
-      description,
-      category,
-      clubName: currentUser?.clubName || "Unknown Club",
-      venue,
-      date: dateValue,
-      startTime,
-      endTime,
-      imageUrl:
-        imageUrl ||
-        "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800",
-      maxParticipants: parseInt(maxParticipants, 10),
-      registeredParticipants: [],
-      registrationDeadline: dateValue - 2 * 24 * 60 * 60 * 1000,
-      status: "upcoming",
-      createdBy: currentUser?.id || "",
-      createdAt: Date.now(),
-      points: parseInt(points, 10),
-    };
-
-    createEvent(event);
-    Alert.alert("Success", "Event created successfully!", [
-      {
-        text: "OK",
-        onPress: () => {
-          setTitle("");
-          setDescription("");
-          setVenue("");
-          setDate("");
-          setStartTime("");
-          setEndTime("");
-          setImageUrl("");
-          setMaxParticipants("");
-          setPoints("");
-        },
-      },
-    ]);
+  const event = {
+    title,
+    description,
+    category,
+    clubName: currentUser?.clubName || "Unknown Club",
+    venue,
+    date: dateValue,
+    startTime,
+    endTime,
+    imageUrl:
+      imageUrl ||
+      "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800",
+    maxParticipants: parseInt(maxParticipants, 10),
+    registeredParticipants: [],
+    registrationDeadline: dateValue - 2 * 24 * 60 * 60 * 1000,
+    status: "upcoming",
+    createdBy: currentUser?._id || "",
+    createdAt: Date.now(),
+    points: parseInt(points, 10),
   };
+
+  createEvent(event);
+  Alert.alert("Success", "Event created successfully!", [
+    {
+      text: "OK",
+      onPress: () => {
+        setTitle("");
+        setDescription("");
+        setVenue("");
+        setDate("");
+        setStartTime("");
+        setEndTime("");
+        setImageUrl("");
+        setMaxParticipants("");
+        setPoints("");
+      },
+    },
+  ]);
+};
+
 
   return (
     <View style={styles.container}>

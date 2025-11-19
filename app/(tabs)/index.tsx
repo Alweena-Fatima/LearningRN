@@ -127,19 +127,19 @@ export default function EventsScreen() {
 
       <FlatList
         data={filteredEvents}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item._id}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         renderItem={({ item }) => {
           const isRegistered = item.registeredParticipants.includes(
-            currentUser?.id || ""
+            currentUser?._id || ""
           );
           const spotsLeft = item.maxParticipants - item.registeredParticipants.length;
 
           return (
             <TouchableOpacity
               style={styles.eventCard}
-              onPress={() => router.push(`/event/${item.id}` as any)}
+              onPress={() => router.push(`/event/${item._id}` as any)}
             >
               <Image source={{ uri: item.imageUrl }} style={styles.eventImage} />
               {isRegistered && (

@@ -22,10 +22,10 @@ export default function ProfileScreen() {
   }
 
   const registeredEvents = events.filter((e) =>
-    currentUser.registeredEvents.includes(e.id)
+    currentUser.registeredEvents.includes(e._id)
   );
   const attendedEvents = events.filter((e) =>
-    currentUser.attendedEvents.includes(e.id)
+    currentUser.attendedEvents.includes(e._id)
   );
 
   const handleLogout = () => {
@@ -134,7 +134,7 @@ export default function ProfileScreen() {
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Events Created</Text>
                 <Text style={styles.infoValue}>
-                  {events.filter((e) => e.createdBy === currentUser.id).length}
+                  {events.filter((e) => e.createdBy === currentUser._id).length}
                 </Text>
               </View>
             </View>

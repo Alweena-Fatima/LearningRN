@@ -5,7 +5,7 @@ import dotenv from "dotenv";
 
 import authRoutes from "./routes/authRoutes.js";
 import testRoutes from "./routes/test.js";
-
+import eventRoutes from "./routes/eventRoutes.js"
 dotenv.config();
 const app = express();
 
