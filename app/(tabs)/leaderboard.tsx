@@ -51,11 +51,11 @@ export default function LeaderboardScreen() {
 
       <FlatList
         data={leaderboard}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item._id}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         renderItem={({ item, index }) => {
-          const isCurrentUser = item.id === currentUser?.id;
+          const isCurrentUser = item._id === currentUser?._id;
 
           return (
             <View

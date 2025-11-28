@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Event, User, Feedback, Registration, EventCategory, EventStatus } from "../types";
 import { mockEvents } from "../mocks/events";
 import { mockUsers } from "../mocks/users";
-import { createEventApi, getEventsApi, getEventApi } from "../api/event";
+import { createEventApi, getEventsApi, getEventApi, registerEventApi,unregisterEventApi} from "../api/event";
 const STORAGE_KEYS = {
   CURRENT_USER: "current_user",
   USERS: "users",
@@ -159,6 +159,19 @@ export const [AppProvider, useApp] = createContextHook(() => {
 
   const registerEventMutation = useMutation({
     mutationFn: async ({ eventId, userId }: { eventId: string; userId: string }) => {
+      
+      // ---------------------------------------------------------
+      // 1. SERVER UPDATE (New Code)
+      // We call the backend first. If this fails, the code stops here.
+      // ---------------------------------------------------------
+      await registerEventApi(eventId, userId); 
+
+      // ---------------------------------------------------------
+      // 2. LOCAL STATE & STORAGE UPDATE (Your Existing Logic)
+      // If server update succeeds, we update the app immediately.
+      // ---------------------------------------------------------
+      
+      // A. Update Registrations List
       const registration: Registration = {
         _id: `${eventId}_${userId}_${Date.now()}`,
         eventId,
@@ -170,27 +183,32 @@ export const [AppProvider, useApp] = createContextHook(() => {
       const updatedRegistrations = [...registrations, registration];
       await AsyncStorage.setItem(STORAGE_KEYS.REGISTRATIONS, JSON.stringify(updatedRegistrations));
 
+      // B. Update Event (add userId to registeredParticipants)
       const event = events.find((e) => e._id === eventId);
       if (event) {
         const updatedEvent = {
           ...event,
           registeredParticipants: [...event.registeredParticipants, userId],
         };
+        // Update local events array
         const updatedEvents = events.map((e) => (e._id === eventId ? updatedEvent : e));
         await AsyncStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(updatedEvents));
         setEvents(updatedEvents);
       }
 
+      // C. Update User (add eventId to registeredEvents)
       const user = users.find((u) => u._id === userId);
       if (user) {
         const updatedUser = {
           ...user,
           registeredEvents: [...user.registeredEvents, eventId],
         };
+        // Update local users array
         const updatedUsers = users.map((u) => (u._id === userId ? updatedUser : u));
         await AsyncStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(updatedUsers));
         setUsers(updatedUsers);
         
+        // Update Current User context if it matches
         if (currentUser?._id === userId) {
           setCurrentUser(updatedUser);
           await AsyncStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(updatedUser));
@@ -201,16 +219,31 @@ export const [AppProvider, useApp] = createContextHook(() => {
     },
     onSuccess: (updated) => {
       setRegistrations(updated);
+      // Optional: You could allow an alert here for success
+      // alert("Registration Successful!");
     },
+    onError: (error) => {
+      console.error("Registration failed:", error);
+      // Optional: Add an alert here so the user knows why it failed
+      // alert("Registration failed: " + error.message);
+    }
   });
 
   const unregisterEventMutation = useMutation({
     mutationFn: async ({ eventId, userId }: { eventId: string; userId: string }) => {
+      
+      // 1. CALL BACKEND FIRST
+      await unregisterEventApi(eventId, userId);
+
+      // 2. UPDATE LOCAL STATE & STORAGE
+      
+      // A. Remove from Registrations List
       const updatedRegistrations = registrations.filter(
         (r) => !(r.eventId === eventId && r.userId === userId)
       );
       await AsyncStorage.setItem(STORAGE_KEYS.REGISTRATIONS, JSON.stringify(updatedRegistrations));
 
+      // B. Remove User from Event (registeredParticipants)
       const event = events.find((e) => e._id === eventId);
       if (event) {
         const updatedEvent = {
@@ -222,6 +255,7 @@ export const [AppProvider, useApp] = createContextHook(() => {
         setEvents(updatedEvents);
       }
 
+      // C. Remove Event from User (registeredEvents)
       const user = users.find((u) => u._id === userId);
       if (user) {
         const updatedUser = {
@@ -232,6 +266,7 @@ export const [AppProvider, useApp] = createContextHook(() => {
         await AsyncStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(updatedUsers));
         setUsers(updatedUsers);
 
+        // Update Current User context if it matches
         if (currentUser?._id === userId) {
           setCurrentUser(updatedUser);
           await AsyncStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(updatedUser));
@@ -243,6 +278,10 @@ export const [AppProvider, useApp] = createContextHook(() => {
     onSuccess: (updated) => {
       setRegistrations(updated);
     },
+    onError: (error) => {
+      console.error("Unregister failed:", error);
+      // alert("Could not unregister. Please try again.");
+    }
   });
 
   const submitFeedbackMutation = useMutation({

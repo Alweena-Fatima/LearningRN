@@ -18,6 +18,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Platform,
 } from "react-native";
 import Colors from "../../constants/colors";
 
@@ -60,21 +61,26 @@ export default function EventDetailsScreen() {
   };
 
   const handleUnregister = () => {
-    if (!currentUser) return;
-    Alert.alert(
-      "Unregister",
-      "Are you sure you want to unregister from this event?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Unregister",
-          style: "destructive",
-          onPress: () =>
-            unregisterEvent({ eventId: event._id, userId: currentUser._id }),
-        },
-      ]
-    );
-  };
+  if (!currentUser) return;
+
+  // 1. Web Logic
+  if (Platform.OS === 'web') {
+    if (confirm("Are you sure you want to unregister?")) {
+      unregisterEvent({ eventId: event._id, userId: currentUser._id });
+    }
+  } 
+  // 2. Mobile Logic
+  else {
+    Alert.alert("Unregister", "Are you sure?", [
+      { text: "Cancel", style: "cancel" },
+      { 
+        text: "Unregister", 
+        style: "destructive", 
+        onPress: () => unregisterEvent({ eventId: event._id, userId: currentUser._id }) 
+      },
+    ]);
+  }
+};
 
   const handleFeedback = () => {
     router.push(`/feedback/${event._id}` as any);

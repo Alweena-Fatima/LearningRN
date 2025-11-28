@@ -16,3 +16,10 @@ export const updateEventApi = (id, data) => axios.put(`${API_URL}/events/${id}`,
 
 // DELETE EVENT
 export const deleteEventApi = (id) => axios.delete(`${API_URL}/events/${id}`);
+// REGISTER FOR EVENT
+export const registerEventApi = (id, userId) => 
+  axios.put(`${API_URL}/events/${id}/register`, { userId });
+// UNREGISTER FROM EVENT
+// Make sure this matches exactly:
+export const unregisterEventApi = (id, userId) => 
+  axios.put(`${API_URL}/events/${id}/unregister`, { userId });
