@@ -2,7 +2,7 @@ import { User } from "../types"; // Adjust the path if needed
 
 export const mockUsers: User[] = [
   {
-    id: "student1",
+    _id: "student1",
     name: "Alex Johnson",
     email: "alex.johnson@college.edu",
     role: "student",
@@ -15,7 +15,7 @@ export const mockUsers: User[] = [
     createdAt: Date.now() - 365 * 24 * 60 * 60 * 1000,
   },
   {
-    id: "student2",
+    _id: "student2",
     name: "Sarah Williams",
     email: "sarah.williams@college.edu",
     role: "student",
@@ -28,7 +28,7 @@ export const mockUsers: User[] = [
     createdAt: Date.now() - 350 * 24 * 60 * 60 * 1000,
   },
   {
-    id: "admin1",
+    _id: "admin1",
     name: "CS Club Admin",
     email: "csclub@college.edu",
     role: "admin",

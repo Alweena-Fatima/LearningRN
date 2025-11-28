@@ -5,6 +5,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Event, User, Feedback, Registration, EventCategory, EventStatus } from "../types";
 import { mockEvents } from "../mocks/events";
 import { mockUsers } from "../mocks/users";
+import { getLeaderboardApi } from "../api/user";
 import { submitFeedbackApi, getFeedbacksApi } from "../api/feedback";
 import { createEventApi, getEventsApi, getEventApi, registerEventApi,unregisterEventApi} from "../api/event";
 const STORAGE_KEYS = {
@@ -416,11 +417,17 @@ export function useEventDetails(eventId: string) {
 }
 
 export function useLeaderboard() {
-  const { users } = useApp();
+  // This hook will now fetch fresh data from the server
+  const query = useQuery({
+    queryKey: ["leaderboard"],
+    queryFn: async () => {
+      const response = await getLeaderboardApi();
+      return response.data;
+    },
+    // Optional: Refresh data every time screen comes into focus or every 1 minute
+    refetchInterval: 60000, 
+  });
 
-  return useMemo(() => {
-    return [...users]
-      .filter((u) => u.role === "student")
-      .sort((a, b) => b.points - a.points);
-  }, [users]);
+  // Return the data (or empty array if loading)
+  return query.data || [];
 }

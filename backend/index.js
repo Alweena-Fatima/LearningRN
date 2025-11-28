@@ -6,6 +6,7 @@ import feedbackRoutes from "./routes/feedbackRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import testRoutes from "./routes/test.js";
 import eventRoutes from "./routes/eventRoutes.js"
+import userRoutes from "./routes/userRoutes.js";
 dotenv.config();
 const app = express();
 
@@ -26,3 +27,4 @@ app.listen(process.env.PORT, () =>
   console.log("Server running on", process.env.PORT)
 );
 app.use("/api/feedbacks", feedbackRoutes);
+app.use("/api/users", userRoutes);
