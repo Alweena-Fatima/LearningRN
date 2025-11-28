@@ -5,6 +5,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Event, User, Feedback, Registration, EventCategory, EventStatus } from "../types";
 import { mockEvents } from "../mocks/events";
 import { mockUsers } from "../mocks/users";
+import { submitFeedbackApi, getFeedbacksApi } from "../api/feedback";
 import { createEventApi, getEventsApi, getEventApi, registerEventApi,unregisterEventApi} from "../api/event";
 const STORAGE_KEYS = {
   CURRENT_USER: "current_user",
@@ -51,12 +52,19 @@ export const [AppProvider, useApp] = createContextHook(() => {
   });
 
   const loadFeedbacksQuery = useQuery({
-    queryKey: ["feedbacks"],
-    queryFn: async () => {
+  queryKey: ["feedbacks"],
+  queryFn: async () => {
+    // Try to get from backend
+    try {
+      const response = await getFeedbacksApi();
+      return response.data;
+    } catch (e) {
+      // Fallback to storage if offline
       const stored = await AsyncStorage.getItem(STORAGE_KEYS.FEEDBACKS);
       return stored ? JSON.parse(stored) : [];
-    },
-  });
+    }
+  },
+});
 
   const loadRegistrationsQuery = useQuery({
     queryKey: ["registrations"],
@@ -286,6 +294,12 @@ export const [AppProvider, useApp] = createContextHook(() => {
 
   const submitFeedbackMutation = useMutation({
     mutationFn: async (feedback: Feedback) => {
+      
+      // 1. CALL BACKEND
+      // We send the feedback data to the server
+      const response = await submitFeedbackApi(feedback);
+      
+      // 2. UPDATE LOCAL STATE (Optimistic or utilizing response)
       const updated = [...feedbacks, feedback];
       await AsyncStorage.setItem(STORAGE_KEYS.FEEDBACKS, JSON.stringify(updated));
 
@@ -293,11 +307,13 @@ export const [AppProvider, useApp] = createContextHook(() => {
       const user = users.find((u) => u._id === feedback.userId);
       
       if (event && user) {
+        // Calculate new points locally so UI updates instantly
         const updatedUser = {
           ...user,
           points: user.points + event.points,
           attendedEvents: [...user.attendedEvents, feedback.eventId],
         };
+
         const updatedUsers = users.map((u) => (u._id === feedback.userId ? updatedUser : u));
         await AsyncStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(updatedUsers));
         setUsers(updatedUsers);
@@ -313,6 +329,9 @@ export const [AppProvider, useApp] = createContextHook(() => {
     onSuccess: (updated) => {
       setFeedbacks(updated);
     },
+    onError: (err) => {
+      console.error("Feedback failed", err);
+    }
   });
 
   return {

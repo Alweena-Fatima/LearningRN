@@ -12,9 +12,9 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator
 } from "react-native";
 import Colors from "../../constants/colors";
-import { Feedback } from "../../types";
 
 export default function FeedbackScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -28,39 +28,52 @@ export default function FeedbackScreen() {
   if (!event || !currentUser) {
     return (
       <View style={styles.container}>
-        <Text style={styles.errorText}>Event or user not found</Text>
+        <Text style={styles.errorText}>Loading...</Text>
       </View>
     );
   }
 
   const handleSubmit = () => {
+    // 1. Validation
     if (rating === 0) {
-      Alert.alert("Error", "Please select a rating");
+      if (Platform.OS === 'web') alert("Please select a rating");
+      else Alert.alert("Error", "Please select a rating");
       return;
     }
 
-    if (!comment.trim()) {
-      Alert.alert("Error", "Please write a comment");
-      return;
-    }
-
-    const feedback: Feedback = {
-      id: `feedback_${Date.now()}`,
-      eventId: event.id,
-      userId: currentUser.id,
+    // 2. Prepare Data (Using _id for MongoDB compatibility)
+    const feedbackData = {
+      _id: Date.now().toString(), // Temp ID
+      eventId: event._id, // <--- CHANGED from .id to ._id
+      userId: currentUser._id, // <--- CHANGED from .id to ._id
       userName: currentUser.name,
       rating,
       comment: comment.trim(),
       createdAt: Date.now(),
     };
 
-    submitFeedback(feedback);
-    Alert.alert("Success", `Thank you for your feedback! You earned ${event.points} points!`, [
-      {
-        text: "OK",
-        onPress: () => router.back(),
+    // 3. Submit with Callbacks (Async handling)
+    submitFeedback(feedbackData, {
+      onSuccess: () => {
+        // Success Logic
+        const message = `Thank you! You earned ${event.points} points.`;
+        
+        if (Platform.OS === 'web') {
+           alert(message);
+           router.back();
+        } else {
+           Alert.alert("Success", message, [
+             { text: "OK", onPress: () => router.back() }
+           ]);
+        }
       },
-    ]);
+      onError: (err) => {
+        console.error(err);
+        const msg = "Could not submit feedback.";
+        if (Platform.OS === 'web') alert(msg);
+        else Alert.alert("Error", msg);
+      }
+    });
   };
 
   return (
@@ -112,7 +125,7 @@ export default function FeedbackScreen() {
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.label}>Your Feedback *</Text>
+            <Text style={styles.label}>Your Feedback</Text>
             <TextInput
               style={styles.textArea}
               value={comment}
@@ -128,16 +141,20 @@ export default function FeedbackScreen() {
           <TouchableOpacity
             style={[
               styles.submitButton,
-              (rating === 0 || !comment.trim() || isSubmittingFeedback) &&
+              (rating === 0 || isSubmittingFeedback) &&
                 styles.submitButtonDisabled,
             ]}
             onPress={handleSubmit}
-            disabled={rating === 0 || !comment.trim() || isSubmittingFeedback}
+            disabled={rating === 0 || isSubmittingFeedback}
           >
-            <Send size={20} color="#FFFFFF" />
-            <Text style={styles.submitButtonText}>
-              {isSubmittingFeedback ? "Submitting..." : "Submit Feedback"}
-            </Text>
+            {isSubmittingFeedback ? (
+               <ActivityIndicator color="#FFF" />
+            ) : (
+               <>
+                 <Send size={20} color="#FFFFFF" />
+                 <Text style={styles.submitButtonText}>Submit Feedback</Text>
+               </>
+            )}
           </TouchableOpacity>
 
           <View style={styles.infoBox}>

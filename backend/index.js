@@ -2,7 +2,7 @@ import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
-
+import feedbackRoutes from "./routes/feedbackRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import testRoutes from "./routes/test.js";
 import eventRoutes from "./routes/eventRoutes.js"
@@ -25,3 +25,4 @@ mongoose
 app.listen(process.env.PORT, () =>
   console.log("Server running on", process.env.PORT)
 );
+app.use("/api/feedbacks", feedbackRoutes);

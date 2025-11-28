@@ -52,8 +52,8 @@ export default function EventDetailsScreen() {
   const isPastEvent = event.date < Date.now();
   const canRegister = !isRegistered && !isFull && !isPastEvent;
   const canUnregister = isRegistered && !isPastEvent;
-  const canFeedback = isRegistered && isPastEvent && !hasFeedback;
-  // const canFeedback = true;
+  //const canFeedback = isRegistered && isPastEvent && !hasFeedback;
+  const canFeedback = true;
 
   const handleRegister = () => {
     if (!currentUser) return;
