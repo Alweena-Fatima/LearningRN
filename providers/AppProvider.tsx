@@ -347,7 +347,7 @@ export const [AppProvider, useApp] = createContextHook(() => {
       loadUsersQuery.isLoading ||
       loadFeedbacksQuery.isLoading ||
       loadRegistrationsQuery.isLoading,
-    login: loginMutation.mutate,
+    login: loginMutation.mutateAsync,
     logout: logoutMutation.mutate,
     createEvent: createEventMutation.mutate,
     updateEvent: updateEventMutation.mutate,

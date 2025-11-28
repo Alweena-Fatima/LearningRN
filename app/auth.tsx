@@ -97,7 +97,13 @@ export default function AuthScreen() {
         const payload = { email, password };
         const res = await loginApi(payload);
 
-        login(res.data.user);
+        // --- CHANGE THIS BLOCK ---
+        // Old code:
+        // login(res.data.user);
+        // router.replace("/(tabs)");
+
+        // New Code (Wait for login to finish):
+        await login(res.data.user); 
         router.replace("/(tabs)");
       }
     } catch (err: any) {
@@ -122,7 +128,7 @@ export default function AuthScreen() {
           const res = await verifyOtpApi({ userId: tempUserId, otp });
           
           // Success: Log them in directly
-          login(res.data.user);
+          await login(res.data.user);
           router.replace("/(tabs)");
       } catch (err: any) {
           setLoading(false);
