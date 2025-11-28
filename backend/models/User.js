@@ -8,13 +8,13 @@ const userSchema = new mongoose.Schema({
     required: true, 
     unique: true,
     // Add this validation block
-    validate: {
-      validator: function(v) {
-        // Regex to check if email ends with @igdtuw.ac.in (case-insensitive)
-        return /@igdtuw\.ac\.in$/i.test(v);
-      },
-      message: props => `${props.value} is not a valid IGDTUW email!`
-    }
+    // validate: {
+    //   validator: function(v) {
+    //     // Regex to check if email ends with @igdtuw.ac.in (case-insensitive)
+    //     return /@igdtuw\.ac\.in$/i.test(v);
+    //   },
+    //   message: props => `${props.value} is not a valid IGDTUW email!`
+    // }
   },
   
   role: { 
@@ -31,7 +31,10 @@ const userSchema = new mongoose.Schema({
   points: { type: Number, default: 0 },
   registeredEvents: [{ type: String }],
   attendedEvents: [{ type: String }],
-  createdAt: { type: Number, default: Date.now } // Removed () to pass function reference
+  createdAt: { type: Number, default: Date.now }, // Removed () to pass function reference
+  isVerified: { type: Boolean, default: false },
+  otp: { type: String },
+  otpExpires: { type: Date },
 });
 
 export default mongoose.model("User", userSchema);

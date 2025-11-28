@@ -10,3 +10,4 @@ export const loginApi = (data) => axios.post(`${API_URL}/auth/login`, data);
 
 // Optional: Backend logout if exists
 // export const logoutApi = () => axios.post(`${API_URL}/auth/logout`);
+export const verifyOtpApi = (data) => axios.post(`${API_URL}/auth/verify-otp`, data);
