@@ -40,7 +40,7 @@ export default function AuthScreen() {
     setPassword("");
   };
 
-  const handleAuth = async () => {
+ const handleAuth = async () => {
     try {
       // ------------------------ SIGNUP -------------------------
       if (!isLogin) {
@@ -48,6 +48,16 @@ export default function AuthScreen() {
           Alert.alert("Error", "Please fill all required fields");
           return;
         }
+
+        // --- ADD THIS CHECK HERE ---
+        if (!email.toLowerCase().endsWith("@igdtuw.ac.in")) {
+          Alert.alert(
+            "Restricted Access", 
+            "Registration is limited to IGDTUW students. Please use your official college email (@igdtuw.ac.in)."
+          );
+          return;
+        }
+        // ---------------------------
 
         const payload =
           role === "student"
