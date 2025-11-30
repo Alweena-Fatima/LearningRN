@@ -1,14 +1,18 @@
 import { Link } from "expo-router";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Pressable } from "react-native";
 import Colors from "../constants/colors";
+import React from "react";
 
 export default function NotFoundScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>404</Text>
       <Text style={styles.subtitle}>Page not found</Text>
-      <Link href="/(tabs)" style={styles.link}>
-        <Text style={styles.linkText}>Go to home screen</Text>
+
+      <Link href="/(tabs)" asChild>
+        <Pressable style={styles.link}>
+          <Text style={styles.linkText}>Go to home screen</Text>
+        </Pressable>
       </Link>
     </View>
   );
@@ -24,7 +28,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 64,
-    fontWeight: "bold" as const,
+    fontWeight: "bold",
     color: Colors.light.primary,
     marginBottom: 8,
   },
@@ -42,7 +46,7 @@ const styles = StyleSheet.create({
   },
   linkText: {
     fontSize: 16,
-    fontWeight: "600" as const,
+    fontWeight: "600",
     color: "#FFFFFF",
   },
 });
