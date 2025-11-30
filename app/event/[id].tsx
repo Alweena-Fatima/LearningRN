@@ -9,6 +9,9 @@ import {
   Award,
   Star,
   MessageSquare,
+  Instagram,
+  Twitter,
+  Linkedin
 } from "lucide-react-native";
 import React from "react";
 import {
@@ -19,6 +22,7 @@ import {
   TouchableOpacity,
   Alert,
   Platform,
+  Linking,
 } from "react-native";
 import Colors from "../../constants/colors";
 
@@ -52,7 +56,6 @@ export default function EventDetailsScreen() {
   const isPastEvent = event.date < Date.now();
   const canRegister = !isRegistered && !isFull && !isPastEvent;
   const canUnregister = isRegistered && !isPastEvent;
-  //const canFeedback = isRegistered && isPastEvent && !hasFeedback;
   const canFeedback = true;
 
   const handleRegister = () => {
@@ -61,30 +64,46 @@ export default function EventDetailsScreen() {
   };
 
   const handleUnregister = () => {
-  if (!currentUser) return;
-
-  // 1. Web Logic
-  if (Platform.OS === 'web') {
-    if (confirm("Are you sure you want to unregister?")) {
-      unregisterEvent({ eventId: event._id, userId: currentUser._id });
+    if (!currentUser) return;
+    if (Platform.OS === 'web') {
+      if (confirm("Are you sure you want to unregister?")) {
+        unregisterEvent({ eventId: event._id, userId: currentUser._id });
+      }
+    } else {
+      Alert.alert("Unregister", "Are you sure?", [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Unregister", 
+          style: "destructive", 
+          onPress: () => unregisterEvent({ eventId: event._id, userId: currentUser._id }) 
+        },
+      ]);
     }
-  } 
-  // 2. Mobile Logic
-  else {
-    Alert.alert("Unregister", "Are you sure?", [
-      { text: "Cancel", style: "cancel" },
-      { 
-        text: "Unregister", 
-        style: "destructive", 
-        onPress: () => unregisterEvent({ eventId: event._id, userId: currentUser._id }) 
-      },
-    ]);
-  }
-};
+  };
 
   const handleFeedback = () => {
     router.push(`/feedback/${event._id}` as any);
   };
+
+  const handleSocialLink = async (url?: string) => {
+    if (!url) return;
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        Alert.alert("Error", `Cannot open URL: ${url}`);
+      }
+    } catch (error) {
+      Alert.alert("Error", "Could not open link");
+    }
+  };
+
+  // Helper variables to check if links exist
+  const socials = event.socials || {};
+  const hasInsta = !!socials.instagram;
+  const hasTwitter = !!socials.twitter;
+  const hasLinkedin = !!socials.linkedin;
 
   return (
     <>
@@ -116,6 +135,46 @@ export default function EventDetailsScreen() {
 
           <Text style={styles.title}>{event.title}</Text>
           <Text style={styles.clubName}>Organized by {event.clubName}</Text>
+
+          {/* --- MODIFIED SOCIAL LINKS SECTION --- */}
+          <View style={styles.socialRow}>
+            {/* Instagram */}
+            <TouchableOpacity 
+              style={[styles.socialIcon, !hasInsta && styles.socialIconDisabled]} 
+              onPress={() => handleSocialLink(socials.instagram)}
+              disabled={!hasInsta}
+            >
+              <Instagram 
+                size={20} 
+                color={hasInsta ? Colors.light.primary : "#A0A0A0"} 
+              />
+            </TouchableOpacity>
+
+            {/* Twitter */}
+            <TouchableOpacity 
+              style={[styles.socialIcon, !hasTwitter && styles.socialIconDisabled]} 
+              onPress={() => handleSocialLink(socials.twitter)}
+              disabled={!hasTwitter}
+            >
+              <Twitter 
+                size={20} 
+                color={hasTwitter ? Colors.light.primary : "#A0A0A0"} 
+              />
+            </TouchableOpacity>
+
+            {/* LinkedIn */}
+            <TouchableOpacity 
+              style={[styles.socialIcon, !hasLinkedin && styles.socialIconDisabled]} 
+              onPress={() => handleSocialLink(socials.linkedin)}
+              disabled={!hasLinkedin}
+            >
+              <Linkedin 
+                size={20} 
+                color={hasLinkedin ? Colors.light.primary : "#A0A0A0"} 
+              />
+            </TouchableOpacity>
+          </View>
+          {/* ----------------------------------- */}
 
           <View style={styles.infoSection}>
             <View style={styles.infoRow}>
@@ -316,7 +375,27 @@ const styles = StyleSheet.create({
   clubName: {
     fontSize: 15,
     color: Colors.light.icon,
+    marginBottom: 12,
+  },
+  // Social Styles Updated
+  socialRow: {
+    flexDirection: 'row',
+    gap: 16,
     marginBottom: 24,
+  },
+  socialIcon: {
+    padding: 10,
+    backgroundColor: Colors.light.card,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  socialIconDisabled: {
+    backgroundColor: '#F5F5F5', // Grey background
+    borderColor: '#E0E0E0',
+    opacity: 0.7,
   },
   infoSection: {
     backgroundColor: Colors.light.card,

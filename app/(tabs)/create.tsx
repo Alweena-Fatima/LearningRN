@@ -1,6 +1,16 @@
 import { useApp } from "../../providers/AppProvider";
-import { EventCategory, Event } from "../../types";
-import { Calendar, MapPin, Users, DollarSign, Image as ImageIcon, Clock } from "lucide-react-native";
+import { EventCategory } from "../../types";
+import { 
+  Calendar, 
+  MapPin, 
+  Users, 
+  DollarSign, 
+  Image as ImageIcon, 
+  Clock,
+  Instagram, // New
+  Twitter,   // New
+  Linkedin   // New
+} from "lucide-react-native";
 import React, { useState } from "react";
 import {
   View,
@@ -41,67 +51,81 @@ export default function CreateEventScreen() {
   const [maxParticipants, setMaxParticipants] = useState("");
   const [points, setPoints] = useState("");
 
+  // Social Media State
+  const [instagram, setInstagram] = useState("");
+  const [twitter, setTwitter] = useState("");
+  const [linkedin, setLinkedin] = useState("");
+
   const handleCreate = () => {
-  if (
-    !title ||
-    !description ||
-    !venue ||
-    !date ||
-    !startTime ||
-    !endTime ||
-    !maxParticipants ||
-    !points
-  ) {
-    Alert.alert("Error", "Please fill in all fields");
-    return;
-  }
+    if (
+      !title ||
+      !description ||
+      !venue ||
+      !date ||
+      !startTime ||
+      !endTime ||
+      !maxParticipants ||
+      !points
+    ) {
+      Alert.alert("Error", "Please fill in all required fields (*)");
+      return;
+    }
 
-  const dateValue = new Date(date).getTime();
-  if (isNaN(dateValue)) {
-    Alert.alert("Error", "Invalid date format. Use YYYY-MM-DD");
-    return;
-  }
+    const dateValue = new Date(date).getTime();
+    if (isNaN(dateValue)) {
+      Alert.alert("Error", "Invalid date format. Use YYYY-MM-DD");
+      return;
+    }
 
-  const event = {
-    title,
-    description,
-    category,
-    clubName: currentUser?.clubName || "Unknown Club",
-    venue,
-    date: dateValue,
-    startTime,
-    endTime,
-    imageUrl:
-      imageUrl ||
-      "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800",
-    maxParticipants: parseInt(maxParticipants, 10),
-    registeredParticipants: [],
-    registrationDeadline: dateValue - 2 * 24 * 60 * 60 * 1000,
-    status: "upcoming",
-    createdBy: currentUser?._id || "",
-    createdAt: Date.now(),
-    points: parseInt(points, 10),
-  };
-
-  createEvent(event);
-  Alert.alert("Success", "Event created successfully!", [
-    {
-      text: "OK",
-      onPress: () => {
-        setTitle("");
-        setDescription("");
-        setVenue("");
-        setDate("");
-        setStartTime("");
-        setEndTime("");
-        setImageUrl("");
-        setMaxParticipants("");
-        setPoints("");
+    const event = {
+      title,
+      description,
+      category,
+      clubName: currentUser?.clubName || "Unknown Club",
+      venue,
+      date: dateValue,
+      startTime,
+      endTime,
+      imageUrl:
+        imageUrl ||
+        "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800",
+      maxParticipants: parseInt(maxParticipants, 10),
+      registeredParticipants: [],
+      registrationDeadline: dateValue - 2 * 24 * 60 * 60 * 1000,
+      status: "upcoming",
+      createdBy: currentUser?._id || "",
+      createdAt: Date.now(),
+      points: parseInt(points, 10),
+      // Add Socials to Payload
+      socials: {
+        instagram: instagram || undefined,
+        twitter: twitter || undefined,
+        linkedin: linkedin || undefined,
       },
-    },
-  ]);
-};
+    };
 
+    createEvent(event);
+    Alert.alert("Success", "Event created successfully!", [
+      {
+        text: "OK",
+        onPress: () => {
+          setTitle("");
+          setDescription("");
+          setVenue("");
+          setDate("");
+          setStartTime("");
+          setEndTime("");
+          setImageUrl("");
+          setMaxParticipants("");
+          setPoints("");
+          // Clear socials
+          setInstagram("");
+          setTwitter("");
+          setLinkedin("");
+        },
+      },
+    ]);
+  };
 
   return (
     <View style={styles.container}>
@@ -268,6 +292,54 @@ export default function CreateEventScreen() {
               </View>
             </View>
 
+            {/* SOCIAL LINKS SECTION */}
+            <View style={styles.sectionHeader}>
+               <Text style={styles.sectionTitle}>Social Links (Optional)</Text>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <View style={styles.inputWithIcon}>
+                <Instagram size={20} color={Colors.light.icon} />
+                <TextInput
+                  style={styles.inputField}
+                  value={instagram}
+                  onChangeText={setInstagram}
+                  placeholder="Instagram URL"
+                  placeholderTextColor={Colors.light.icon}
+                  autoCapitalize="none"
+                />
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <View style={styles.inputWithIcon}>
+                <Twitter size={20} color={Colors.light.icon} />
+                <TextInput
+                  style={styles.inputField}
+                  value={twitter}
+                  onChangeText={setTwitter}
+                  placeholder="Twitter/X URL"
+                  placeholderTextColor={Colors.light.icon}
+                  autoCapitalize="none"
+                />
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <View style={styles.inputWithIcon}>
+                <Linkedin size={20} color={Colors.light.icon} />
+                <TextInput
+                  style={styles.inputField}
+                  value={linkedin}
+                  onChangeText={setLinkedin}
+                  placeholder="LinkedIn URL"
+                  placeholderTextColor={Colors.light.icon}
+                  autoCapitalize="none"
+                />
+              </View>
+            </View>
+            {/* END SOCIAL LINKS SECTION */}
+
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Image URL (Optional)</Text>
               <View style={styles.inputWithIcon}>
@@ -413,5 +485,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700" as const,
     color: "#FFFFFF",
+  },
+  sectionHeader: {
+    marginTop: 10,
+    marginBottom: -10,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: Colors.light.text,
   },
 });

@@ -14,6 +14,13 @@ const eventSchema = new mongoose.Schema({
   },
 
   clubName: { type: String, required: true },
+  // --- ADD THIS SECTION ---
+  socials: {
+    instagram: { type: String },
+    twitter: { type: String },
+    linkedin: { type: String }
+  },
+  // ------------------------
   venue: { type: String, required: true },
   date: { type: Number, required: true },
 

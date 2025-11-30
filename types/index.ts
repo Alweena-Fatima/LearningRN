@@ -39,6 +39,12 @@ export interface Event {
   createdBy: string;
   createdAt: number;
   points: number;
+  // --- ADD THIS SECTION ---
+  socials?: {
+    instagram?: string;
+    twitter?: string;
+    linkedin?: string;
+  };
 }
 
 
