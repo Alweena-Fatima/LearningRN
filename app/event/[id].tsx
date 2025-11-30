@@ -12,7 +12,8 @@ import {
   Sparkles,
   Instagram,
   Twitter,
-  Linkedin
+  Linkedin,
+  Download
 } from "lucide-react-native";
 import React from "react";
 import {
@@ -24,14 +25,17 @@ import {
   Alert,
   Platform,
   Linking,
+  ActivityIndicator,
 } from "react-native";
 import Colors from "../../constants/colors";
 import { generatePosterApi } from "../../api/event";
+// FIX: Revert to wildcard import
 import * as FileSystem from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
 
 export default function EventDetailsScreen() {
   const [isGenerating, setIsGenerating] = React.useState(false);
+  const [isDownloading, setIsDownloading] = React.useState(false);
   const { id } = useLocalSearchParams<{ id: string }>();
   const { event, eventFeedbacks, isRegistered, avgRating } = useEventDetails(id || "");
   const { currentUser, registerEvent, unregisterEvent, isRegistering, isUnregistering } = useApp();
@@ -98,25 +102,114 @@ export default function EventDetailsScreen() {
     }
   };
 
-const handleGeneratePoster = async () => {
-  try {
-    setIsGenerating(true);
+  const handleGeneratePoster = async () => {
+    try {
+      setIsGenerating(true);
 
-    const res = await generatePosterApi(event._id);
-    const base64 = res.data.b64Data;
+      const res = await generatePosterApi(event._id);
+      const base64 = res.data.b64Data;
 
-    if (!base64) throw new Error("No image data received");
+      if (!base64) throw new Error("No image data received");
 
-    // Instead of saving, just set it to state
-    setPosterBase64(`data:image/png;base64,${base64}`);
+      setPosterBase64(`data:image/png;base64,${base64}`);
 
-  } catch (err) {
-    console.log(err);
-    Alert.alert("Error", "Could not generate poster.");
-  } finally {
-    setIsGenerating(false);
-  }
-};
+    } catch (err) {
+      console.log(err);
+      Alert.alert("Error", "Could not generate poster.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleDownloadPoster = async () => {
+    if (!posterBase64) {
+      Alert.alert("Error", "No poster to download. Please generate a poster first.");
+      return;
+    }
+
+    setIsDownloading(true);
+    try {
+      // Handle web platform differently
+      if (Platform.OS === "web") {
+        const base64Data = posterBase64.split(",")[1];
+        if (!base64Data) {
+          throw new Error("Invalid image data");
+        }
+
+        if (typeof window !== "undefined" && typeof document !== "undefined") {
+          const byteCharacters = atob(base64Data);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], { type: "image/png" });
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = `event_poster_${event.title.replace(/[^a-z0-9]/gi, '')}${Date.now()}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+
+          Alert.alert("Success", "Poster downloaded!");
+          setIsDownloading(false);
+          return;
+        } else {
+          throw new Error("Web APIs not available");
+        }
+      }
+
+      // For native platforms (iOS/Android)
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Permission Denied",
+          "Please grant media library permissions to save the poster."
+        );
+        setIsDownloading(false);
+        return;
+      }
+
+      const base64Data = posterBase64.split(",")[1];
+      if (!base64Data) {
+        throw new Error("Invalid image data");
+      }
+
+      // FIX: Cast FileSystem to any to bypass the "Property does not exist" error
+      // The property definitely exists at runtime in Expo Go/Builds.
+      const docDir = (FileSystem as any).documentDirectory;
+
+      if (!docDir) {
+        throw new Error("Filesystem unavailable");
+      }
+
+      const fileName = `event_poster_${event.title.replace(/[^a-z0-9]/gi, '')}${Date.now()}.png`;
+      const fileUri = `${docDir}${fileName}`;
+
+      // FIX: Use 'base64' string directly instead of relying on the Enum
+      await FileSystem.writeAsStringAsync(fileUri, base64Data, {
+        encoding: 'base64',
+      });
+
+      const asset = await MediaLibrary.createAssetAsync(fileUri);
+      
+      try {
+        await MediaLibrary.createAlbumAsync("Event Posters", asset, false);
+      } catch (albumError) {
+        await MediaLibrary.addAssetsToAlbumAsync([asset], "Event Posters", false);
+      }
+
+      Alert.alert("Success", "Poster saved to your gallery!");
+    } catch (error: any) {
+      console.error("Error downloading poster:", error);
+      Alert.alert("Error", error.message || "Failed to download poster");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const socials = event.socials || {};
   const hasInsta = !!socials.instagram;
@@ -161,16 +254,33 @@ const handleGeneratePoster = async () => {
                 </>}
               </TouchableOpacity>
 
-              {/* NEW: Poster preview */}
               {posterBase64 && (
-                <Image
-                  source={{ uri: posterBase64 }}
-                  style={{ width: 300, height: 300, marginTop: 20, alignSelf: 'center' }}
-                />
+                <>
+                  <Image
+                    source={{ uri: posterBase64 }}
+                    style={{ width: 300, height: 300, marginTop: 20, alignSelf: 'center', borderRadius: 12 }}
+                  />
+                  <TouchableOpacity 
+                    style={[styles.downloadButton, isDownloading && styles.downloadButtonDisabled]} 
+                    onPress={handleDownloadPoster}
+                    disabled={isDownloading}
+                  >
+                    {isDownloading ? (
+                      <>
+                        <ActivityIndicator size="small" color="#FFF" />
+                        <Text style={styles.downloadButtonText}>Downloading...</Text>
+                      </>
+                    ) : (
+                      <>
+                        <Download size={18} color="#FFF" />
+                        <Text style={styles.downloadButtonText}>Download Poster</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                </>
               )}
             </>
           )}
-
           <View style={styles.infoSection}>
             <View style={styles.infoRow}><Calendar size={20} color={Colors.light.primary} /><View style={styles.infoContent}><Text style={styles.infoLabel}>Date</Text><Text style={styles.infoValue}>{formatDate(event.date)}</Text></View></View>
             <View style={styles.infoRow}><Clock size={20} color={Colors.light.primary} /><View style={styles.infoContent}><Text style={styles.infoLabel}>Time</Text><Text style={styles.infoValue}>{event.startTime} - {event.endTime}</Text></View></View>
@@ -218,12 +328,11 @@ const handleGeneratePoster = async () => {
   );
 }
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.light.background,
-    marginBottom:20,
+    marginBottom:30,
   },
   scrollContent: {
     paddingBottom: 100,
@@ -322,6 +431,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     borderWidth: 1,
     borderColor: Colors.light.border,
+    
   },
   infoRow: {
     flexDirection: "row",
@@ -414,8 +524,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light.card,
     borderTopWidth: 1,
     borderTopColor: Colors.light.border,
-    padding: 10,
-    marginTop:20,
+    padding: 20,
+    marginTop:10,
     paddingBottom: 30,
   },
   button: {
@@ -426,7 +536,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light.primary,
     paddingVertical: 16,
     borderRadius: 12,
-    margin:3,
+    marginTop:3,
   },
   buttonDisabled: {
     opacity: 0.5,
@@ -440,7 +550,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700" as const,
     color: "#FFFFFF",
-    
   },
   unregisterText: {
     color: Colors.light.error,
@@ -467,6 +576,29 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   aiButtonText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  downloadButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: Colors.light.primary,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginTop: 16,
+    shadowColor: Colors.light.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  downloadButtonDisabled: {
+    opacity: 0.7,
+  },
+  downloadButtonText: {
     color: "#FFFFFF",
     fontSize: 15,
     fontWeight: "700",

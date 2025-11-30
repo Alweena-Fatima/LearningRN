@@ -1,3 +1,4 @@
+
 {
   "expo": {
     "name": "LearningRN",
@@ -13,7 +14,11 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSPhotoLibraryAddUsageDescription": "This app needs access to your photo library to save generated event posters.",
+        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to save generated event posters."
+      }
     },
     "android": {
       "adaptiveIcon": {

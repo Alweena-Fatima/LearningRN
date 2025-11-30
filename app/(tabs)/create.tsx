@@ -426,7 +426,7 @@ export default function CreateEventScreen() {
                 />
               </View>
 
-              {/* NEW STABILITY AI BUTTON */}
+              {/* NEW STABILITY AI BUTTON
               <TouchableOpacity 
                 style={[styles.aiButton, isGeneratingImage && styles.aiButtonDisabled]} 
                 onPress={generateAIImage}
@@ -445,7 +445,7 @@ export default function CreateEventScreen() {
                  <Text style={{color: Colors.light.success, fontSize: 12, marginTop: 5}}>
                     Image generated successfully!
                  </Text>
-              )}
+              )} */}
             </View>
 
             <TouchableOpacity
