@@ -223,6 +223,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.light.background,
+    marginBottom:20,
   },
   scrollContent: {
     paddingBottom: 100,
@@ -413,7 +414,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light.card,
     borderTopWidth: 1,
     borderTopColor: Colors.light.border,
-    padding: 20,
+    padding: 10,
+    marginTop:20,
     paddingBottom: 30,
   },
   button: {
@@ -424,6 +426,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light.primary,
     paddingVertical: 16,
     borderRadius: 12,
+    margin:3,
   },
   buttonDisabled: {
     opacity: 0.5,
@@ -437,6 +440,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700" as const,
     color: "#FFFFFF",
+    
   },
   unregisterText: {
     color: Colors.light.error,
