@@ -36,6 +36,7 @@ export default function EventDetailsScreen() {
   const { event, eventFeedbacks, isRegistered, avgRating } = useEventDetails(id || "");
   const { currentUser, registerEvent, unregisterEvent, isRegistering, isUnregistering } = useApp();
   const router = useRouter();
+  const [posterBase64, setPosterBase64] = React.useState<string | null>(null);
 
   if (!event) {
     return (
@@ -97,58 +98,25 @@ export default function EventDetailsScreen() {
     }
   };
 
-  const handleGeneratePoster = async () => {
-    try {
-      if (Platform.OS !== "web") {
-        const { status } = await MediaLibrary.requestPermissionsAsync();
-        if (status !== "granted") {
-          Alert.alert("Permission Required", "Please allow gallery access.");
-          return;
-        }
-      }
+const handleGeneratePoster = async () => {
+  try {
+    setIsGenerating(true);
 
-      setIsGenerating(true);
+    const res = await generatePosterApi(event._id);
+    const base64 = res.data.b64Data;
 
-      const res = await generatePosterApi(event._id);
-      const base64 = res.data.b64Data;
+    if (!base64) throw new Error("No image data received");
 
-      if (!base64) throw new Error("No image data received");
+    // Instead of saving, just set it to state
+    setPosterBase64(`data:image/png;base64,${base64}`);
 
-      if (Platform.OS === "web") {
-        const link = document.createElement("a");
-        link.href = `data:image/png;base64,${base64}`;
-        link.download = `poster_${event._id}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        alert("Poster downloaded!");
-        return;
-      }
-
-      // @ts-ignore: Suppress strict type check for documentDirectory
-      const docDir = FileSystem.documentDirectory;
-
-      if (!docDir) {
-        throw new Error("Unable to access local storage.");
-      }
-
-      const fileUri = `${docDir}poster_${event._id}.png`;
-
-      // FIX: Use string 'base64' directly instead of FileSystem.EncodingType.Base64
-      await FileSystem.writeAsStringAsync(fileUri, base64, { 
-        encoding: 'base64' 
-      });
-      
-      await MediaLibrary.saveToLibraryAsync(fileUri);
-
-      Alert.alert("Success", "Poster saved to gallery!");
-    } catch (err) {
-      console.log(err);
-      Alert.alert("Error", "Could not download poster.");
-    } finally {
-      setIsGenerating(false);
-    }
-  };
+  } catch (err) {
+    console.log(err);
+    Alert.alert("Error", "Could not generate poster.");
+  } finally {
+    setIsGenerating(false);
+  }
+};
 
   const socials = event.socials || {};
   const hasInsta = !!socials.instagram;
@@ -185,12 +153,22 @@ export default function EventDetailsScreen() {
           </View>
 
           {currentUser?.role === "admin" && (
-            <TouchableOpacity style={styles.aiButton} onPress={handleGeneratePoster} disabled={isGenerating}>
-              {isGenerating ? <Text style={styles.aiButtonText}>Generating Magic...</Text> : <>
-                <Sparkles size={20} color="#FFF" />
-                <Text style={styles.aiButtonText}>Generate AI Poster</Text>
-              </>}
-            </TouchableOpacity>
+            <>
+              <TouchableOpacity style={styles.aiButton} onPress={handleGeneratePoster} disabled={isGenerating}>
+                {isGenerating ? <Text style={styles.aiButtonText}>Generating Magic...</Text> : <>
+                  <Sparkles size={20} color="#FFF" />
+                  <Text style={styles.aiButtonText}>Generate AI Poster</Text>
+                </>}
+              </TouchableOpacity>
+
+              {/* NEW: Poster preview */}
+              {posterBase64 && (
+                <Image
+                  source={{ uri: posterBase64 }}
+                  style={{ width: 300, height: 300, marginTop: 20, alignSelf: 'center' }}
+                />
+              )}
+            </>
           )}
 
           <View style={styles.infoSection}>
