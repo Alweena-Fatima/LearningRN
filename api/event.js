@@ -23,3 +23,5 @@ export const registerEventApi = (id, userId) =>
 // Make sure this matches exactly:
 export const unregisterEventApi = (id, userId) => 
   axios.put(`${API_URL}/events/${id}/unregister`, { userId });
+export const generatePosterApi = (eventId) => 
+  axios.post(`${API_URL}/events/${eventId}/generate-poster`);

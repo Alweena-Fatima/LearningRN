@@ -9,6 +9,7 @@ import {
   Award,
   Star,
   MessageSquare,
+  Sparkles,
   Instagram,
   Twitter,
   Linkedin
@@ -25,13 +26,15 @@ import {
   Linking,
 } from "react-native";
 import Colors from "../../constants/colors";
+import { generatePosterApi } from "../../api/event";
+import * as FileSystem from 'expo-file-system';
+import * as MediaLibrary from 'expo-media-library';
 
 export default function EventDetailsScreen() {
+  const [isGenerating, setIsGenerating] = React.useState(false);
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { event, eventFeedbacks, isRegistered, hasFeedback, avgRating } =
-    useEventDetails(id || "");
-  const { currentUser, registerEvent, unregisterEvent, isRegistering, isUnregistering } =
-    useApp();
+  const { event, eventFeedbacks, isRegistered, avgRating } = useEventDetails(id || "");
+  const { currentUser, registerEvent, unregisterEvent, isRegistering, isUnregistering } = useApp();
   const router = useRouter();
 
   if (!event) {
@@ -56,7 +59,6 @@ export default function EventDetailsScreen() {
   const isPastEvent = event.date < Date.now();
   const canRegister = !isRegistered && !isFull && !isPastEvent;
   const canUnregister = isRegistered && !isPastEvent;
-  const canFeedback = true;
 
   const handleRegister = () => {
     if (!currentUser) return;
@@ -72,11 +74,7 @@ export default function EventDetailsScreen() {
     } else {
       Alert.alert("Unregister", "Are you sure?", [
         { text: "Cancel", style: "cancel" },
-        { 
-          text: "Unregister", 
-          style: "destructive", 
-          onPress: () => unregisterEvent({ eventId: event._id, userId: currentUser._id }) 
-        },
+        { text: "Unregister", style: "destructive", onPress: () => unregisterEvent({ eventId: event._id, userId: currentUser._id }) },
       ]);
     }
   };
@@ -99,7 +97,59 @@ export default function EventDetailsScreen() {
     }
   };
 
-  // Helper variables to check if links exist
+  const handleGeneratePoster = async () => {
+    try {
+      if (Platform.OS !== "web") {
+        const { status } = await MediaLibrary.requestPermissionsAsync();
+        if (status !== "granted") {
+          Alert.alert("Permission Required", "Please allow gallery access.");
+          return;
+        }
+      }
+
+      setIsGenerating(true);
+
+      const res = await generatePosterApi(event._id);
+      const base64 = res.data.b64Data;
+
+      if (!base64) throw new Error("No image data received");
+
+      if (Platform.OS === "web") {
+        const link = document.createElement("a");
+        link.href = `data:image/png;base64,${base64}`;
+        link.download = `poster_${event._id}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        alert("Poster downloaded!");
+        return;
+      }
+
+      // @ts-ignore: Suppress strict type check for documentDirectory
+      const docDir = FileSystem.documentDirectory;
+
+      if (!docDir) {
+        throw new Error("Unable to access local storage.");
+      }
+
+      const fileUri = `${docDir}poster_${event._id}.png`;
+
+      // FIX: Use string 'base64' directly instead of FileSystem.EncodingType.Base64
+      await FileSystem.writeAsStringAsync(fileUri, base64, { 
+        encoding: 'base64' 
+      });
+      
+      await MediaLibrary.saveToLibraryAsync(fileUri);
+
+      Alert.alert("Success", "Poster saved to gallery!");
+    } catch (err) {
+      console.log(err);
+      Alert.alert("Error", "Could not download poster.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const socials = event.socials || {};
   const hasInsta = !!socials.instagram;
   const hasTwitter = !!socials.twitter;
@@ -108,111 +158,46 @@ export default function EventDetailsScreen() {
   return (
     <>
       <Stack.Screen options={{ title: event.title }} />
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
         <Image source={{ uri: event.imageUrl }} style={styles.image} />
-
         <View style={styles.content}>
           <View style={styles.header}>
             <View style={styles.badges}>
-              <View style={styles.categoryBadge}>
-                <Text style={styles.categoryText}>{event.category}</Text>
-              </View>
-              <View style={styles.pointsBadge}>
-                <Award size={14} color="#FFFFFF" />
-                <Text style={styles.pointsText}>{event.points} pts</Text>
-              </View>
+              <View style={styles.categoryBadge}><Text style={styles.categoryText}>{event.category}</Text></View>
+              <View style={styles.pointsBadge}><Award size={14} color="#FFF" /><Text style={styles.pointsText}>{event.points} pts</Text></View>
             </View>
-            {isRegistered && (
-              <View style={styles.registeredBadge}>
-                <Text style={styles.registeredText}>Registered</Text>
-              </View>
-            )}
+            {isRegistered && <View style={styles.registeredBadge}><Text style={styles.registeredText}>Registered</Text></View>}
           </View>
 
           <Text style={styles.title}>{event.title}</Text>
           <Text style={styles.clubName}>Organized by {event.clubName}</Text>
 
-          {/* --- MODIFIED SOCIAL LINKS SECTION --- */}
           <View style={styles.socialRow}>
-            {/* Instagram */}
-            <TouchableOpacity 
-              style={[styles.socialIcon, !hasInsta && styles.socialIconDisabled]} 
-              onPress={() => handleSocialLink(socials.instagram)}
-              disabled={!hasInsta}
-            >
-              <Instagram 
-                size={20} 
-                color={hasInsta ? Colors.light.primary : "#A0A0A0"} 
-              />
+            <TouchableOpacity style={[styles.socialIcon, !hasInsta && styles.socialIconDisabled]} onPress={() => handleSocialLink(socials.instagram)} disabled={!hasInsta}>
+              <Instagram size={20} color={hasInsta ? Colors.light.primary : "#A0A0A0"} />
             </TouchableOpacity>
-
-            {/* Twitter */}
-            <TouchableOpacity 
-              style={[styles.socialIcon, !hasTwitter && styles.socialIconDisabled]} 
-              onPress={() => handleSocialLink(socials.twitter)}
-              disabled={!hasTwitter}
-            >
-              <Twitter 
-                size={20} 
-                color={hasTwitter ? Colors.light.primary : "#A0A0A0"} 
-              />
+            <TouchableOpacity style={[styles.socialIcon, !hasTwitter && styles.socialIconDisabled]} onPress={() => handleSocialLink(socials.twitter)} disabled={!hasTwitter}>
+              <Twitter size={20} color={hasTwitter ? Colors.light.primary : "#A0A0A0"} />
             </TouchableOpacity>
-
-            {/* LinkedIn */}
-            <TouchableOpacity 
-              style={[styles.socialIcon, !hasLinkedin && styles.socialIconDisabled]} 
-              onPress={() => handleSocialLink(socials.linkedin)}
-              disabled={!hasLinkedin}
-            >
-              <Linkedin 
-                size={20} 
-                color={hasLinkedin ? Colors.light.primary : "#A0A0A0"} 
-              />
+            <TouchableOpacity style={[styles.socialIcon, !hasLinkedin && styles.socialIconDisabled]} onPress={() => handleSocialLink(socials.linkedin)} disabled={!hasLinkedin}>
+              <Linkedin size={20} color={hasLinkedin ? Colors.light.primary : "#A0A0A0"} />
             </TouchableOpacity>
           </View>
-          {/* ----------------------------------- */}
+
+          {currentUser?.role === "admin" && (
+            <TouchableOpacity style={styles.aiButton} onPress={handleGeneratePoster} disabled={isGenerating}>
+              {isGenerating ? <Text style={styles.aiButtonText}>Generating Magic...</Text> : <>
+                <Sparkles size={20} color="#FFF" />
+                <Text style={styles.aiButtonText}>Generate AI Poster</Text>
+              </>}
+            </TouchableOpacity>
+          )}
 
           <View style={styles.infoSection}>
-            <View style={styles.infoRow}>
-              <Calendar size={20} color={Colors.light.primary} />
-              <View style={styles.infoContent}>
-                <Text style={styles.infoLabel}>Date</Text>
-                <Text style={styles.infoValue}>{formatDate(event.date)}</Text>
-              </View>
-            </View>
-
-            <View style={styles.infoRow}>
-              <Clock size={20} color={Colors.light.primary} />
-              <View style={styles.infoContent}>
-                <Text style={styles.infoLabel}>Time</Text>
-                <Text style={styles.infoValue}>
-                  {event.startTime} - {event.endTime}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.infoRow}>
-              <MapPin size={20} color={Colors.light.primary} />
-              <View style={styles.infoContent}>
-                <Text style={styles.infoLabel}>Venue</Text>
-                <Text style={styles.infoValue}>{event.venue}</Text>
-              </View>
-            </View>
-
-            <View style={styles.infoRow}>
-              <Users size={20} color={Colors.light.primary} />
-              <View style={styles.infoContent}>
-                <Text style={styles.infoLabel}>Participants</Text>
-                <Text style={[styles.infoValue, isFull && styles.fullText]}>
-                  {event.registeredParticipants.length} / {event.maxParticipants}
-                  {isFull && " (Full)"}
-                </Text>
-              </View>
-            </View>
+            <View style={styles.infoRow}><Calendar size={20} color={Colors.light.primary} /><View style={styles.infoContent}><Text style={styles.infoLabel}>Date</Text><Text style={styles.infoValue}>{formatDate(event.date)}</Text></View></View>
+            <View style={styles.infoRow}><Clock size={20} color={Colors.light.primary} /><View style={styles.infoContent}><Text style={styles.infoLabel}>Time</Text><Text style={styles.infoValue}>{event.startTime} - {event.endTime}</Text></View></View>
+            <View style={styles.infoRow}><MapPin size={20} color={Colors.light.primary} /><View style={styles.infoContent}><Text style={styles.infoLabel}>Venue</Text><Text style={styles.infoValue}>{event.venue}</Text></View></View>
+            <View style={styles.infoRow}><Users size={20} color={Colors.light.primary} /><View style={styles.infoContent}><Text style={styles.infoLabel}>Participants</Text><Text style={[styles.infoValue, isFull && styles.fullText]}>{event.registeredParticipants.length}/{event.maxParticipants}{isFull && " (Full)"}</Text></View></View>
           </View>
 
           <View style={styles.section}>
@@ -224,37 +209,19 @@ export default function EventDetailsScreen() {
             <View style={styles.section}>
               <View style={styles.ratingHeader}>
                 <Text style={styles.sectionTitle}>Reviews</Text>
-                <View style={styles.ratingBadge}>
-                  <Star size={16} color="#FFFFFF" fill="#FFFFFF" />
-                  <Text style={styles.ratingText}>
-                    {avgRating.toFixed(1)} ({eventFeedbacks.length})
-                  </Text>
-                </View>
+                <View style={styles.ratingBadge}><Star size={16} color="#FFF" fill="#FFF" /><Text style={styles.ratingText}>{avgRating.toFixed(1)} ({eventFeedbacks.length})</Text></View>
               </View>
-              {eventFeedbacks.map((feedback) => (
-                <View key={feedback._id} style={styles.feedbackCard}>
+              {eventFeedbacks.map(f => (
+                <View key={f._id} style={styles.feedbackCard}>
                   <View style={styles.feedbackHeader}>
-                    <Text style={styles.feedbackName}>{feedback.userName}</Text>
+                    <Text style={styles.feedbackName}>{f.userName}</Text>
                     <View style={styles.starsRow}>
                       {Array.from({ length: 5 }).map((_, i) => (
-                        <Star
-                          key={i}
-                          size={14}
-                          color={
-                            i < feedback.rating
-                              ? Colors.light.accent
-                              : Colors.light.border
-                          }
-                          fill={
-                            i < feedback.rating
-                              ? Colors.light.accent
-                              : "transparent"
-                          }
-                        />
+                        <Star key={i} size={14} color={i < f.rating ? Colors.light.accent : Colors.light.border} fill={i < f.rating ? Colors.light.accent : "transparent"} />
                       ))}
                     </View>
                   </View>
-                  <Text style={styles.feedbackComment}>{feedback.comment}</Text>
+                  <Text style={styles.feedbackComment}>{f.comment}</Text>
                 </View>
               ))}
             </View>
@@ -264,43 +231,15 @@ export default function EventDetailsScreen() {
 
       {currentUser?.role === "student" && (
         <View style={styles.footer}>
-          {canRegister && (
-            <TouchableOpacity
-              style={[styles.button, isRegistering && styles.buttonDisabled]}
-              onPress={handleRegister}
-              disabled={isRegistering}
-            >
-              <Text style={styles.buttonText}>
-                {isRegistering ? "Registering..." : "Register Now"}
-              </Text>
-            </TouchableOpacity>
-          )}
-          {canUnregister && (
-            <TouchableOpacity
-              style={[
-                styles.button,
-                styles.unregisterButton,
-                isUnregistering && styles.buttonDisabled,
-              ]}
-              onPress={handleUnregister}
-              disabled={isUnregistering}
-            >
-              <Text style={[styles.buttonText, styles.unregisterText]}>
-                {isUnregistering ? "Unregistering..." : "Unregister"}
-              </Text>
-            </TouchableOpacity>
-          )}
-          {canFeedback && (
-            <TouchableOpacity style={styles.button} onPress={handleFeedback}>
-              <MessageSquare size={20} color="#FFFFFF" />
-              <Text style={styles.buttonText}>Submit Feedback</Text>
-            </TouchableOpacity>
-          )}
+          {canRegister && <TouchableOpacity style={[styles.button, isRegistering && styles.buttonDisabled]} onPress={handleRegister} disabled={isRegistering}><Text style={styles.buttonText}>{isRegistering ? "Registering..." : "Register Now"}</Text></TouchableOpacity>}
+          {canUnregister && <TouchableOpacity style={[styles.button, styles.unregisterButton, isUnregistering && styles.buttonDisabled]} onPress={handleUnregister} disabled={isUnregistering}><Text style={[styles.buttonText, styles.unregisterText]}>{isUnregistering ? "Unregistering..." : "Unregister"}</Text></TouchableOpacity>}
+          <TouchableOpacity style={styles.button} onPress={handleFeedback}><MessageSquare size={20} color="#FFF" /><Text style={styles.buttonText}>Submit Feedback</Text></TouchableOpacity>
         </View>
       )}
     </>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
@@ -377,7 +316,6 @@ const styles = StyleSheet.create({
     color: Colors.light.icon,
     marginBottom: 12,
   },
-  // Social Styles Updated
   socialRow: {
     flexDirection: 'row',
     gap: 16,
@@ -393,7 +331,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   socialIconDisabled: {
-    backgroundColor: '#F5F5F5', // Grey background
+    backgroundColor: '#F5F5F5',
     borderColor: '#E0E0E0',
     opacity: 0.7,
   },
@@ -530,5 +468,25 @@ const styles = StyleSheet.create({
     color: Colors.light.text,
     textAlign: "center",
     marginTop: 40,
+  },
+  aiButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#8B5CF6",
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginBottom: 24,
+    gap: 8,
+    shadowColor: "#8B5CF6",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  aiButtonText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "700",
   },
 });

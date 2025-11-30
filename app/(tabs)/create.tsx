@@ -7,9 +7,10 @@ import {
   DollarSign, 
   Image as ImageIcon, 
   Clock,
-  Instagram, // New
-  Twitter,   // New
-  Linkedin   // New
+  Instagram, 
+  Twitter, 
+  Linkedin,
+  Wand2 // Icon for AI
 } from "lucide-react-native";
 import React, { useState } from "react";
 import {
@@ -22,9 +23,13 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "../../constants/colors";
+
+// --- ACCESS ENV VARIABLE ---
+const STABILITY_API_KEY = process.env.EXPO_PUBLIC_STABILITY_API_KEY;
 
 const CATEGORIES: EventCategory[] = [
   "Technical",
@@ -55,6 +60,73 @@ export default function CreateEventScreen() {
   const [instagram, setInstagram] = useState("");
   const [twitter, setTwitter] = useState("");
   const [linkedin, setLinkedin] = useState("");
+
+  // AI Generation State
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+
+  // --- STABILITY AI FUNCTION ---
+  const generateAIImage = async () => {
+    if (!title) {
+      Alert.alert("Required", "Please enter an Event Title first to generate an image.");
+      return;
+    }
+
+    if (!STABILITY_API_KEY) {
+        Alert.alert("Configuration Error", "API Key not found. Please check your .env file.");
+        return;
+    }
+
+    setIsGeneratingImage(true);
+
+    try {
+      const response = await fetch(
+        "https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: `Bearer ${STABILITY_API_KEY}`,
+          },
+          body: JSON.stringify({
+            text_prompts: [
+              {
+                text: `A high quality, professional event poster for: ${title}. Category: ${category}. Minimalistic, vector art style, 4k resolution.`,
+                weight: 1,
+              },
+            ],
+            cfg_scale: 7,
+            height: 1024,
+            width: 1024,
+            samples: 1,
+            steps: 30,
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to generate image");
+      }
+
+      // Stability AI returns an array of artifacts. We take the first one (Base64).
+      const base64Image = result.artifacts[0].base64;
+      
+      // Convert to Data URI so React Native <Image> can read it
+      const finalImageUri = `data:image/png;base64,${base64Image}`;
+      
+      setImageUrl(finalImageUri);
+      Alert.alert("Success", "AI Image generated successfully!");
+
+    } catch (error: any) {
+      console.error(error);
+      Alert.alert("AI Error", error.message || "Something went wrong");
+    } finally {
+      setIsGeneratingImage(false);
+    }
+  };
+  // -----------------------------
 
   const handleCreate = () => {
     if (
@@ -96,7 +168,6 @@ export default function CreateEventScreen() {
       createdBy: currentUser?._id || "",
       createdAt: Date.now(),
       points: parseInt(points, 10),
-      // Add Socials to Payload
       socials: {
         instagram: instagram || undefined,
         twitter: twitter || undefined,
@@ -341,18 +412,40 @@ export default function CreateEventScreen() {
             {/* END SOCIAL LINKS SECTION */}
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Image URL (Optional)</Text>
+              <Text style={styles.label}>Event Image</Text>
               <View style={styles.inputWithIcon}>
                 <ImageIcon size={20} color={Colors.light.icon} />
                 <TextInput
                   style={styles.inputField}
-                  value={imageUrl}
+                  // Check length to hide massive Base64 string from UI
+                  value={imageUrl.length > 100 ? "AI Generated Image Selected (Hidden)" : imageUrl}
                   onChangeText={setImageUrl}
-                  placeholder="https://..."
+                  placeholder="https://... or use AI Button"
                   placeholderTextColor={Colors.light.icon}
                   autoCapitalize="none"
                 />
               </View>
+
+              {/* NEW STABILITY AI BUTTON */}
+              <TouchableOpacity 
+                style={[styles.aiButton, isGeneratingImage && styles.aiButtonDisabled]} 
+                onPress={generateAIImage}
+                disabled={isGeneratingImage}
+              >
+                {isGeneratingImage ? (
+                  <ActivityIndicator size="small" color="#FFF" />
+                ) : (
+                  <>
+                    <Wand2 size={18} color="#FFF" />
+                    <Text style={styles.aiButtonText}>Generate with Stability AI</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+              {imageUrl.length > 100 && (
+                 <Text style={{color: Colors.light.success, fontSize: 12, marginTop: 5}}>
+                    Image generated successfully!
+                 </Text>
+              )}
             </View>
 
             <TouchableOpacity
@@ -494,5 +587,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
     color: Colors.light.text,
+  },
+  aiButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: Colors.light.accent, 
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginTop: 5,
+  },
+  aiButtonDisabled: {
+    opacity: 0.7,
+  },
+  aiButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "600",
+    fontSize: 14,
   },
 });
