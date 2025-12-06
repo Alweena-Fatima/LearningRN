@@ -2,12 +2,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import createContextHook from "@nkzw/create-context-hook";
 import { useState, useEffect, useMemo } from "react";
-import { Event, User, Feedback, Registration, EventCategory, EventStatus } from "../types";
+// Removed type imports since they aren't needed in JS
 import { mockEvents } from "../mocks/events";
 import { mockUsers } from "../mocks/users";
 import { getLeaderboardApi } from "../api/user";
 import { submitFeedbackApi, getFeedbacksApi } from "../api/feedback";
-import { createEventApi, getEventsApi, getEventApi, registerEventApi,unregisterEventApi} from "../api/event";
+import { createEventApi, getEventsApi, registerEventApi, unregisterEventApi} from "../api/event";
+
 const STORAGE_KEYS = {
   CURRENT_USER: "current_user",
   USERS: "users",
@@ -17,11 +18,11 @@ const STORAGE_KEYS = {
 };
 
 export const [AppProvider, useApp] = createContextHook(() => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [events, setEvents] = useState<Event[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
-  const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
-  const [registrations, setRegistrations] = useState<Registration[]>([]);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [events, setEvents] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [feedbacks, setFeedbacks] = useState([]);
+  const [registrations, setRegistrations] = useState([]);
 
   const loadUserQuery = useQuery({
     queryKey: ["currentUser"],
@@ -32,13 +33,12 @@ export const [AppProvider, useApp] = createContextHook(() => {
   });
 
   const loadEventsQuery = useQuery({
-  queryKey: ["events"],
-  queryFn: async () => {
-    const response = await getEventsApi();
-    return response.data; // backend se events
-  },
-});
-
+    queryKey: ["events"],
+    queryFn: async () => {
+      const response = await getEventsApi();
+      return response.data; // backend se events
+    },
+  });
 
   const loadUsersQuery = useQuery({
     queryKey: ["users"],
@@ -53,19 +53,19 @@ export const [AppProvider, useApp] = createContextHook(() => {
   });
 
   const loadFeedbacksQuery = useQuery({
-  queryKey: ["feedbacks"],
-  queryFn: async () => {
-    // Try to get from backend
-    try {
-      const response = await getFeedbacksApi();
-      return response.data;
-    } catch (e) {
-      // Fallback to storage if offline
-      const stored = await AsyncStorage.getItem(STORAGE_KEYS.FEEDBACKS);
-      return stored ? JSON.parse(stored) : [];
-    }
-  },
-});
+    queryKey: ["feedbacks"],
+    queryFn: async () => {
+      // Try to get from backend
+      try {
+        const response = await getFeedbacksApi();
+        return response.data;
+      } catch (e) {
+        // Fallback to storage if offline
+        const stored = await AsyncStorage.getItem(STORAGE_KEYS.FEEDBACKS);
+        return stored ? JSON.parse(stored) : [];
+      }
+    },
+  });
 
   const loadRegistrationsQuery = useQuery({
     queryKey: ["registrations"],
@@ -106,11 +106,11 @@ export const [AppProvider, useApp] = createContextHook(() => {
   }, [loadRegistrationsQuery.data]);
 
   const loginMutation = useMutation({
-    mutationFn: async (user: User) => {
+    mutationFn: async (user) => {
       await AsyncStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
       const existingUsers = await AsyncStorage.getItem(STORAGE_KEYS.USERS);
       const usersList = existingUsers ? JSON.parse(existingUsers) : mockUsers;
-      const userExists = usersList.find((u: User) => u._id === user._id);
+      const userExists = usersList.find((u) => u._id === user._id);
       if (!userExists) {
         usersList.push(user);
         await AsyncStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(usersList));
@@ -133,19 +133,19 @@ export const [AppProvider, useApp] = createContextHook(() => {
   });
 
   const createEventMutation = useMutation({
-  mutationFn: async (event: Event) => {
-    // Backend call
-    const response = await createEventApi(event);
-    return response.data; // yeh backend se saved event ka data hai (_id included)
-  },
-  onSuccess: (savedEvent) => {
-    // State update
-    setEvents((prev) => [...prev, savedEvent]);
-  },
-});
+    mutationFn: async (event) => {
+      // Backend call
+      const response = await createEventApi(event);
+      return response.data; // yeh backend se saved event ka data hai (_id included)
+    },
+    onSuccess: (savedEvent) => {
+      // State update
+      setEvents((prev) => [...prev, savedEvent]);
+    },
+  });
 
   const updateEventMutation = useMutation({
-    mutationFn: async (event: Event) => {
+    mutationFn: async (event) => {
       const updated = events.map((e) => (e._id === event._id ? event : e));
       await AsyncStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(updated));
       return updated;
@@ -156,7 +156,7 @@ export const [AppProvider, useApp] = createContextHook(() => {
   });
 
   const deleteEventMutation = useMutation({
-    mutationFn: async (eventId: string) => {
+    mutationFn: async (eventId) => {
       const updated = events.filter((e) => e._id !== eventId);
       await AsyncStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(updated));
       return updated;
@@ -167,21 +167,15 @@ export const [AppProvider, useApp] = createContextHook(() => {
   });
 
   const registerEventMutation = useMutation({
-    mutationFn: async ({ eventId, userId }: { eventId: string; userId: string }) => {
+    mutationFn: async ({ eventId, userId }) => {
       
-      // ---------------------------------------------------------
-      // 1. SERVER UPDATE (New Code)
-      // We call the backend first. If this fails, the code stops here.
-      // ---------------------------------------------------------
+      // 1. SERVER UPDATE
       await registerEventApi(eventId, userId); 
 
-      // ---------------------------------------------------------
-      // 2. LOCAL STATE & STORAGE UPDATE (Your Existing Logic)
-      // If server update succeeds, we update the app immediately.
-      // ---------------------------------------------------------
+      // 2. LOCAL STATE & STORAGE UPDATE
       
       // A. Update Registrations List
-      const registration: Registration = {
+      const registration = {
         _id: `${eventId}_${userId}_${Date.now()}`,
         eventId,
         userId,
@@ -228,18 +222,14 @@ export const [AppProvider, useApp] = createContextHook(() => {
     },
     onSuccess: (updated) => {
       setRegistrations(updated);
-      // Optional: You could allow an alert here for success
-      // alert("Registration Successful!");
     },
     onError: (error) => {
       console.error("Registration failed:", error);
-      // Optional: Add an alert here so the user knows why it failed
-      // alert("Registration failed: " + error.message);
     }
   });
 
   const unregisterEventMutation = useMutation({
-    mutationFn: async ({ eventId, userId }: { eventId: string; userId: string }) => {
+    mutationFn: async ({ eventId, userId }) => {
       
       // 1. CALL BACKEND FIRST
       await unregisterEventApi(eventId, userId);
@@ -289,18 +279,16 @@ export const [AppProvider, useApp] = createContextHook(() => {
     },
     onError: (error) => {
       console.error("Unregister failed:", error);
-      // alert("Could not unregister. Please try again.");
     }
   });
 
   const submitFeedbackMutation = useMutation({
-    mutationFn: async (feedback: Feedback) => {
+    mutationFn: async (feedback) => {
       
       // 1. CALL BACKEND
-      // We send the feedback data to the server
       const response = await submitFeedbackApi(feedback);
       
-      // 2. UPDATE LOCAL STATE (Optimistic or utilizing response)
+      // 2. UPDATE LOCAL STATE
       const updated = [...feedbacks, feedback];
       await AsyncStorage.setItem(STORAGE_KEYS.FEEDBACKS, JSON.stringify(updated));
 
@@ -308,7 +296,6 @@ export const [AppProvider, useApp] = createContextHook(() => {
       const user = users.find((u) => u._id === feedback.userId);
       
       if (event && user) {
-        // Calculate new points locally so UI updates instantly
         const updatedUser = {
           ...user,
           points: user.points + event.points,
@@ -362,11 +349,7 @@ export const [AppProvider, useApp] = createContextHook(() => {
   };
 });
 
-export function useFilteredEvents(
-  search: string,
-  category: EventCategory | "All",
-  status: EventStatus | "all"
-) {
+export function useFilteredEvents(search, category, status) {
   const { events } = useApp();
 
   return useMemo(() => {
@@ -396,7 +379,7 @@ export function useFilteredEvents(
   }, [events, search, category, status]);
 }
 
-export function useEventDetails(eventId: string) {
+export function useEventDetails(eventId) {
   const { events, feedbacks, currentUser } = useApp();
 
   return useMemo(() => {
@@ -417,17 +400,14 @@ export function useEventDetails(eventId: string) {
 }
 
 export function useLeaderboard() {
-  // This hook will now fetch fresh data from the server
   const query = useQuery({
     queryKey: ["leaderboard"],
     queryFn: async () => {
       const response = await getLeaderboardApi();
       return response.data;
     },
-    // Optional: Refresh data every time screen comes into focus or every 1 minute
     refetchInterval: 60000, 
   });
 
-  // Return the data (or empty array if loading)
   return query.data || [];
 }

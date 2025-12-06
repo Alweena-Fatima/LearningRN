@@ -1,5 +1,4 @@
 import { useFilteredEvents, useApp } from "../../providers/AppProvider";
-import { EventCategory, EventStatus } from "../../types";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { Search, Calendar, MapPin, Users } from "lucide-react-native";
@@ -16,7 +15,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "../../constants/colors";
 
-const CATEGORIES: (EventCategory | "All")[] = [
+const CATEGORIES = [
   "All",
   "Technical",
   "Cultural",
@@ -29,15 +28,15 @@ const CATEGORIES: (EventCategory | "All")[] = [
 
 export default function EventsScreen() {
   const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<EventCategory | "All">("All");
-  const [selectedStatus, setSelectedStatus] = useState<EventStatus | "all">("upcoming");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedStatus, setSelectedStatus] = useState("upcoming");
 
   const filteredEvents = useFilteredEvents(search, selectedCategory, selectedStatus);
   const { currentUser } = useApp();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const formatDate = (timestamp: number) => {
+  const formatDate = (timestamp) => {
     const date = new Date(timestamp);
     const today = new Date();
     const tomorrow = new Date(today);
@@ -104,7 +103,7 @@ export default function EventsScreen() {
       </ScrollView>
 
       <View style={styles.statusContainer}>
-        {(["upcoming", "ongoing", "completed"] as const).map((status) => (
+        {["upcoming", "ongoing", "completed"].map((status) => (
           <TouchableOpacity
             key={status}
             style={[
@@ -139,7 +138,7 @@ export default function EventsScreen() {
           return (
             <TouchableOpacity
               style={styles.eventCard}
-              onPress={() => router.push(`/event/${item._id}` as any)}
+              onPress={() => router.push(`/event/${item._id}`)}
             >
               <Image source={{ uri: item.imageUrl }} style={styles.eventImage} />
               {isRegistered && (
@@ -208,7 +207,6 @@ export default function EventsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    
     backgroundColor: Colors.light.background,
   },
   header: {
@@ -218,7 +216,7 @@ const styles = StyleSheet.create({
   },
   greeting: {
     fontSize: 28,
-    fontWeight: "700" as const,
+    fontWeight: "700",
     color: Colors.light.text,
     marginBottom: 4,
   },
@@ -247,14 +245,12 @@ const styles = StyleSheet.create({
     color: Colors.light.text,
   },
  filterScroll: {
-   
     minHeight: 65, 
     flexGrow: 0,
-    marginBottom: 2, // Increased from 12 to 24 to force separation
+    marginBottom: 2,
   },
   filterContent: {
     paddingHorizontal: 20,
-    // Add vertical padding so the borders of the chips don't get cut off
     paddingVertical: 10, 
     gap: 8,
   },
@@ -272,7 +268,7 @@ const styles = StyleSheet.create({
   },
   filterChipText: {
     fontSize: 14,
-    fontWeight: "600" as const,
+    fontWeight: "600",
     color: Colors.light.text,
   },
   filterChipTextActive: {
@@ -280,7 +276,6 @@ const styles = StyleSheet.create({
   },
   statusContainer: {
     flexDirection: "row",
-   
     paddingHorizontal: 20,
     gap: 8,
     marginBottom: 16,
@@ -300,7 +295,7 @@ const styles = StyleSheet.create({
   },
   statusButtonText: {
     fontSize: 13,
-    fontWeight: "600" as const,
+    fontWeight: "600",
     color: Colors.light.icon,
   },
   statusButtonTextActive: {
@@ -334,7 +329,7 @@ const styles = StyleSheet.create({
   },
   registeredBadgeText: {
     fontSize: 12,
-    fontWeight: "700" as const,
+    fontWeight: "700",
     color: "#FFFFFF",
   },
   eventContent: {
@@ -354,7 +349,7 @@ const styles = StyleSheet.create({
   },
   categoryText: {
     fontSize: 12,
-    fontWeight: "600" as const,
+    fontWeight: "600",
     color: Colors.light.primary,
   },
   pointsBadge: {
@@ -365,12 +360,12 @@ const styles = StyleSheet.create({
   },
   pointsText: {
     fontSize: 12,
-    fontWeight: "700" as const,
+    fontWeight: "700",
     color: "#FFFFFF",
   },
   eventTitle: {
     fontSize: 18,
-    fontWeight: "700" as const,
+    fontWeight: "700",
     color: Colors.light.text,
     marginBottom: 6,
   },
@@ -394,7 +389,7 @@ const styles = StyleSheet.create({
   },
   detailTextWarning: {
     color: Colors.light.error,
-    fontWeight: "600" as const,
+    fontWeight: "600",
   },
   emptyContainer: {
     alignItems: "center",
@@ -403,7 +398,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 18,
-    fontWeight: "600" as const,
+    fontWeight: "600",
     color: Colors.light.text,
     marginTop: 16,
   },

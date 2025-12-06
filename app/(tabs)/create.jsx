@@ -1,5 +1,4 @@
 import { useApp } from "../../providers/AppProvider";
-import { EventCategory } from "../../types";
 import { 
   Calendar, 
   MapPin, 
@@ -10,7 +9,7 @@ import {
   Instagram, 
   Twitter, 
   Linkedin,
-  Wand2 // Icon for AI
+  Wand2 
 } from "lucide-react-native";
 import React, { useState } from "react";
 import {
@@ -31,7 +30,7 @@ import Colors from "../../constants/colors";
 // --- ACCESS ENV VARIABLE ---
 const STABILITY_API_KEY = process.env.EXPO_PUBLIC_STABILITY_API_KEY;
 
-const CATEGORIES: EventCategory[] = [
+const CATEGORIES = [
   "Technical",
   "Cultural",
   "Sports",
@@ -47,7 +46,7 @@ export default function CreateEventScreen() {
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [category, setCategory] = useState<EventCategory>("Technical");
+  const [category, setCategory] = useState("Technical");
   const [venue, setVenue] = useState("");
   const [date, setDate] = useState("");
   const [startTime, setStartTime] = useState("");
@@ -119,7 +118,7 @@ export default function CreateEventScreen() {
       setImageUrl(finalImageUri);
       Alert.alert("Success", "AI Image generated successfully!");
 
-    } catch (error: any) {
+    } catch (error) {
       console.error(error);
       Alert.alert("AI Error", error.message || "Something went wrong");
     } finally {
@@ -425,27 +424,6 @@ export default function CreateEventScreen() {
                   autoCapitalize="none"
                 />
               </View>
-
-              {/* NEW STABILITY AI BUTTON
-              <TouchableOpacity 
-                style={[styles.aiButton, isGeneratingImage && styles.aiButtonDisabled]} 
-                onPress={generateAIImage}
-                disabled={isGeneratingImage}
-              >
-                {isGeneratingImage ? (
-                  <ActivityIndicator size="small" color="#FFF" />
-                ) : (
-                  <>
-                    <Wand2 size={18} color="#FFF" />
-                    <Text style={styles.aiButtonText}>Generate with Stability AI</Text>
-                  </>
-                )}
-              </TouchableOpacity>
-              {imageUrl.length > 100 && (
-                 <Text style={{color: Colors.light.success, fontSize: 12, marginTop: 5}}>
-                    Image generated successfully!
-                 </Text>
-              )} */}
             </View>
 
             <TouchableOpacity
@@ -484,7 +462,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 28,
-    fontWeight: "700" as const,
+    fontWeight: "700",
     color: Colors.light.text,
     marginBottom: 4,
   },
@@ -500,7 +478,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontWeight: "600" as const,
+    fontWeight: "600",
     color: Colors.light.text,
   },
   input: {
@@ -551,7 +529,7 @@ const styles = StyleSheet.create({
   },
   categoryText: {
     fontSize: 14,
-    fontWeight: "600" as const,
+    fontWeight: "600",
     color: Colors.light.text,
   },
   categoryTextActive: {
@@ -576,7 +554,7 @@ const styles = StyleSheet.create({
   },
   createButtonText: {
     fontSize: 16,
-    fontWeight: "700" as const,
+    fontWeight: "700",
     color: "#FFFFFF",
   },
   sectionHeader: {

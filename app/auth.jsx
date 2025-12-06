@@ -1,5 +1,4 @@
 import { useApp } from "../providers/AppProvider";
-import { UserRole } from "../types";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { Calendar, Users, Star, Lock, KeyRound, Mail } from "lucide-react-native";
@@ -25,8 +24,8 @@ import Colors from "../constants/colors";
 
 export default function AuthScreen() {
   const [isLogin, setIsLogin] = useState(true);
-  const [isOtpSent, setIsOtpSent] = useState(false); // <--- New State
-  const [role, setRole] = useState<UserRole>("student");
+  const [isOtpSent, setIsOtpSent] = useState(false);
+  const [role, setRole] = useState("student"); // Removed <UserRole>
 
   // Form Fields
   const [name, setName] = useState("");
@@ -63,13 +62,6 @@ export default function AuthScreen() {
           return;
         }
 
-        // // Domain Validation
-        // if (!email.toLowerCase().endsWith("@igdtuw.ac.in")) {
-        //    Alert.alert("Restricted", "Please use your @igdtuw.ac.in email.");
-        //    setLoading(false);
-        //    return;
-        // }
-
         const payload =
           role === "student"
             ? { name, email, password, role, collegeId, department }
@@ -97,16 +89,11 @@ export default function AuthScreen() {
         const payload = { email, password };
         const res = await loginApi(payload);
 
-        // --- CHANGE THIS BLOCK ---
-        // Old code:
-        // login(res.data.user);
-        // router.replace("/(tabs)");
-
-        // New Code (Wait for login to finish):
+        // Wait for login to finish
         await login(res.data.user); 
         router.replace("/(tabs)");
       }
-    } catch (err: any) {
+    } catch (err) { // Removed :any
       console.log(err);
       setLoading(false);
       Alert.alert(
@@ -130,7 +117,7 @@ export default function AuthScreen() {
           // Success: Log them in directly
           await login(res.data.user);
           router.replace("/(tabs)");
-      } catch (err: any) {
+      } catch (err) { // Removed :any
           setLoading(false);
           Alert.alert("Verification Failed", err?.response?.data?.message || "Invalid OTP");
       }
@@ -306,7 +293,7 @@ export default function AuthScreen() {
                   )}
 
                   {!isLogin && role === "admin" && (
-                     <View style={styles.inputContainer}>
+                      <View style={styles.inputContainer}>
                         <Text style={styles.label}>Club Name</Text>
                         <TextInput
                           style={styles.input}

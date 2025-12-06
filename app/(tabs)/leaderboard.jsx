@@ -15,7 +15,7 @@ export default function LeaderboardScreen() {
   const { currentUser } = useApp();
   const insets = useSafeAreaInsets();
 
-  const getRankIcon = (index: number) => {
+  const getRankIcon = (index) => {
     switch (index) {
       case 0:
         return <Trophy size={24} color="#FFD700" />;
@@ -28,7 +28,7 @@ export default function LeaderboardScreen() {
     }
   };
 
-  const getRankColor = (index: number) => {
+  const getRankColor = (index) => {
     switch (index) {
       case 0:
         return "#FFD700";
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 28,
-    fontWeight: "700" as const,
+    fontWeight: "700",
     color: Colors.light.text,
     marginTop: 12,
     marginBottom: 4,
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
   },
   rankText: {
     fontSize: 18,
-    fontWeight: "700" as const,
+    fontWeight: "700",
     color: Colors.light.text,
   },
   userInfo: {
@@ -190,13 +190,13 @@ const styles = StyleSheet.create({
   },
   userName: {
     fontSize: 16,
-    fontWeight: "600" as const,
+    fontWeight: "600",
     color: Colors.light.text,
     marginBottom: 4,
   },
   userNameHighlight: {
     color: Colors.light.primary,
-    fontWeight: "700" as const,
+    fontWeight: "700",
   },
   userDepartment: {
     fontSize: 13,
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
   },
   pointsText: {
     fontSize: 16,
-    fontWeight: "700" as const,
+    fontWeight: "700",
     color: "#FFFFFF",
   },
   eventsText: {
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 18,
-    fontWeight: "600" as const,
+    fontWeight: "600",
     color: Colors.light.text,
     marginTop: 16,
   },

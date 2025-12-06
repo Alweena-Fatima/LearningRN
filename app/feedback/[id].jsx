@@ -17,7 +17,7 @@ import {
 import Colors from "../../constants/colors";
 
 export default function FeedbackScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id } = useLocalSearchParams();
   const { event } = useEventDetails(id || "");
   const { currentUser, submitFeedback, isSubmittingFeedback } = useApp();
   const router = useRouter();
@@ -44,8 +44,8 @@ export default function FeedbackScreen() {
     // 2. Prepare Data (Using _id for MongoDB compatibility)
     const feedbackData = {
       _id: Date.now().toString(), // Temp ID
-      eventId: event._id, // <--- CHANGED from .id to ._id
-      userId: currentUser._id, // <--- CHANGED from .id to ._id
+      eventId: event._id,
+      userId: currentUser._id,
       userName: currentUser.name,
       rating,
       comment: comment.trim(),
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: "700" as const,
+    fontWeight: "700",
     color: Colors.light.text,
     marginBottom: 8,
   },
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    fontWeight: "600" as const,
+    fontWeight: "600",
     color: Colors.light.text,
     marginBottom: 16,
   },
@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
   },
   ratingText: {
     fontSize: 18,
-    fontWeight: "600" as const,
+    fontWeight: "600",
     color: Colors.light.accent,
     textAlign: "center",
   },
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
   },
   submitButtonText: {
     fontSize: 16,
-    fontWeight: "700" as const,
+    fontWeight: "700",
     color: "#FFFFFF",
   },
   infoBox: {

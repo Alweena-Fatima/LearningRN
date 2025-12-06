@@ -29,18 +29,17 @@ import {
 } from "react-native";
 import Colors from "../../constants/colors";
 import { generatePosterApi } from "../../api/event";
-// FIX: Revert to wildcard import
 import * as FileSystem from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
 
 export default function EventDetailsScreen() {
   const [isGenerating, setIsGenerating] = React.useState(false);
   const [isDownloading, setIsDownloading] = React.useState(false);
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id } = useLocalSearchParams();
   const { event, eventFeedbacks, isRegistered, avgRating } = useEventDetails(id || "");
   const { currentUser, registerEvent, unregisterEvent, isRegistering, isUnregistering } = useApp();
   const router = useRouter();
-  const [posterBase64, setPosterBase64] = React.useState<string | null>(null);
+  const [posterBase64, setPosterBase64] = React.useState(null);
 
   if (!event) {
     return (
@@ -50,7 +49,7 @@ export default function EventDetailsScreen() {
     );
   }
 
-  const formatDate = (timestamp: number) => {
+  const formatDate = (timestamp) => {
     return new Date(timestamp).toLocaleDateString("en-US", {
       weekday: "long",
       year: "numeric",
@@ -85,10 +84,10 @@ export default function EventDetailsScreen() {
   };
 
   const handleFeedback = () => {
-    router.push(`/feedback/${event._id}` as any);
+    router.push(`/feedback/${event._id}`);
   };
 
-  const handleSocialLink = async (url?: string) => {
+  const handleSocialLink = async (url) => {
     if (!url) return;
     try {
       const supported = await Linking.canOpenURL(url);
@@ -178,9 +177,8 @@ export default function EventDetailsScreen() {
         throw new Error("Invalid image data");
       }
 
-      // FIX: Cast FileSystem to any to bypass the "Property does not exist" error
-      // The property definitely exists at runtime in Expo Go/Builds.
-      const docDir = (FileSystem as any).documentDirectory;
+      // No need to cast to 'any' in JS
+      const docDir = FileSystem.documentDirectory;
 
       if (!docDir) {
         throw new Error("Filesystem unavailable");
@@ -189,7 +187,6 @@ export default function EventDetailsScreen() {
       const fileName = `event_poster_${event.title.replace(/[^a-z0-9]/gi, '')}${Date.now()}.png`;
       const fileUri = `${docDir}${fileName}`;
 
-      // FIX: Use 'base64' string directly instead of relying on the Enum
       await FileSystem.writeAsStringAsync(fileUri, base64Data, {
         encoding: 'base64',
       });
@@ -203,7 +200,7 @@ export default function EventDetailsScreen() {
       }
 
       Alert.alert("Success", "Poster saved to your gallery!");
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error downloading poster:", error);
       Alert.alert("Error", error.message || "Failed to download poster");
     } finally {
@@ -365,7 +362,7 @@ const styles = StyleSheet.create({
   },
   categoryText: {
     fontSize: 13,
-    fontWeight: "600" as const,
+    fontWeight: "600",
     color: Colors.light.primary,
   },
   pointsBadge: {
@@ -379,7 +376,7 @@ const styles = StyleSheet.create({
   },
   pointsText: {
     fontSize: 13,
-    fontWeight: "700" as const,
+    fontWeight: "700",
     color: "#FFFFFF",
   },
   registeredBadge: {
@@ -390,12 +387,12 @@ const styles = StyleSheet.create({
   },
   registeredText: {
     fontSize: 13,
-    fontWeight: "700" as const,
+    fontWeight: "700",
     color: "#FFFFFF",
   },
   title: {
     fontSize: 26,
-    fontWeight: "700" as const,
+    fontWeight: "700",
     color: Colors.light.text,
     marginBottom: 8,
   },
@@ -448,7 +445,7 @@ const styles = StyleSheet.create({
   },
   infoValue: {
     fontSize: 15,
-    fontWeight: "600" as const,
+    fontWeight: "600",
     color: Colors.light.text,
   },
   fullText: {
@@ -459,7 +456,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: "700" as const,
+    fontWeight: "700",
     color: Colors.light.text,
     marginBottom: 12,
   },
@@ -485,7 +482,7 @@ const styles = StyleSheet.create({
   },
   ratingText: {
     fontSize: 14,
-    fontWeight: "700" as const,
+    fontWeight: "700",
     color: "#FFFFFF",
   },
   feedbackCard: {
@@ -504,7 +501,7 @@ const styles = StyleSheet.create({
   },
   feedbackName: {
     fontSize: 15,
-    fontWeight: "600" as const,
+    fontWeight: "600",
     color: Colors.light.text,
   },
   starsRow: {
@@ -548,7 +545,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontSize: 16,
-    fontWeight: "700" as const,
+    fontWeight: "700",
     color: "#FFFFFF",
   },
   unregisterText: {

@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
   },
   userName: {
     fontSize: 24,
-    fontWeight: "700" as const,
+    fontWeight: "700",
     color: Colors.light.text,
     marginBottom: 4,
   },
@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
   },
   roleBadgeText: {
     fontSize: 13,
-    fontWeight: "600" as const,
+    fontWeight: "600",
     color: "#FFFFFF",
   },
   statsContainer: {
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 28,
-    fontWeight: "700" as const,
+    fontWeight: "700",
     color: Colors.light.text,
     marginBottom: 4,
   },
@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: "700" as const,
+    fontWeight: "700",
     color: Colors.light.text,
     marginBottom: 12,
   },
@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
   },
   infoValue: {
     fontSize: 15,
-    fontWeight: "600" as const,
+    fontWeight: "600",
     color: Colors.light.text,
   },
   divider: {
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
   },
   logoutText: {
     fontSize: 16,
-    fontWeight: "600" as const,
+    fontWeight: "600",
     color: Colors.light.error,
   },
 });
